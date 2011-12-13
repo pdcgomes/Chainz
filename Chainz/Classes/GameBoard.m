@@ -10,9 +10,15 @@
 #import "Gem.h"
 
 ////////////////////////////////////////////////////////////////////////////////
+// Constants and definitions
+////////////////////////////////////////////////////////////////////////////////
+const NSUInteger kGameboardMinSequence = 3;
+
+////////////////////////////////////////////////////////////////////////////////
 // Helper functions
 ////////////////////////////////////////////////////////////////////////////////
-static void swap(NSInteger *a, NSInteger *b) {
+static void swap(NSInteger *a, NSInteger *b)
+{
 	NSInteger tmp = *a;
 	*a = *b;
 	*b = tmp;
@@ -357,7 +363,7 @@ static void swap(NSInteger *a, NSInteger *b) {
 	// This would match (0,0), (0,1), (1,1) (color = 1) and (0,2) (1,2) (2,2) (color = 3)
 	// typical bejeweled rules would only translate to one valid chain (color 3)
 	// again, we'll implement the game logic validation elsewhere
-	if([matches count] < 3) {
+	if([matches count] < kGameboardMinSequence) {
 		[matches removeAllObjects];
 	}
 	return [matches autorelease];
@@ -412,7 +418,7 @@ static void swap(NSInteger *a, NSInteger *b) {
 	for(NSString *pv in sortedByColumns) {
 		CGPoint p = CGPointFromString(pv);
 		if(p.x != prevX) {
-			if([tmpStack count] >= 3) {
+			if([tmpStack count] >= kGameboardMinSequence) {
 				[chain addObjectsFromArray:tmpStack];
 			}
 			[tmpStack removeAllObjects];
@@ -420,7 +426,7 @@ static void swap(NSInteger *a, NSInteger *b) {
 		[tmpStack addObject:pv];
 		prevX = p.x;
 	}
-	if([tmpStack count] >= 3) {
+	if([tmpStack count] >= kGameboardMinSequence) {
 		[chain addObjectsFromArray:tmpStack];	
 	}
 	[tmpStack removeAllObjects];
@@ -429,7 +435,7 @@ static void swap(NSInteger *a, NSInteger *b) {
 	for(NSString *pv in sortedByRows) {
 		CGPoint p = CGPointFromString(pv);
 		if(p.y != prevY) {
-			if([tmpStack count] >= 3) {
+			if([tmpStack count] >= kGameboardMinSequence) {
 				[chain addObjectsFromArray:tmpStack];
 			}
 			[tmpStack removeAllObjects];
@@ -437,7 +443,7 @@ static void swap(NSInteger *a, NSInteger *b) {
 		[tmpStack addObject:pv];
 		prevY = p.y;
 	}
-	if([tmpStack count] >= 3) {
+	if([tmpStack count] >= kGameboardMinSequence) {
 		[chain addObjectsFromArray:tmpStack];	
 	}
 	[tmpStack release];
