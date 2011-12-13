@@ -9,7 +9,7 @@
 #import "cocos2d.h"
 
 #import "AppDelegate.h"
-#import "HelloWorldLayer.h"
+#import "MainMenuScene.h"
 #import "RootViewController.h"
 
 @implementation AppDelegate
@@ -17,7 +17,7 @@
 @synthesize window=window_;
 @synthesize viewController=viewController_;
 
-- (void) removeStartupFlicker
+- (void)removeStartupFlicker
 {
 	//
 	// THIS CODE REMOVES THE STARTUP FLICKER
@@ -36,7 +36,7 @@
 //	CC_ENABLE_DEFAULT_GL_STATES();
 }
 
-- (void) applicationDidFinishLaunching:(UIApplication*)application
+- (void)applicationDidFinishLaunching:(UIApplication*)application
 {
 	// Init the window
 	window_ = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
@@ -90,7 +90,7 @@
 	[self removeStartupFlicker];
 	
 	// Run the intro Scene
-	[[CCDirector sharedDirector] runWithScene: [HelloWorldLayer scene]];
+	[[CCDirector sharedDirector] runWithScene:[MainMenuScene scene]];
 }
 
 
