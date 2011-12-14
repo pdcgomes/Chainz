@@ -8,9 +8,11 @@
 
 #import "cocos2d.h"
 
+@class GameBoard;
+
 @interface ClassicGameScene : CCLayer
 {
-	
+	GameBoard	*_gameboard;	
 }
 
 + (CCScene *) scene;

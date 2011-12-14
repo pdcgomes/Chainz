@@ -17,7 +17,9 @@ typedef enum {
 } GemKind;
 
 typedef enum {
+	GemColorBlack,
 	GemColorBlue,
+	GemColorMagenta,
 	GemColorOrange,
 	GemColorPurple,
 	GemColorRed,

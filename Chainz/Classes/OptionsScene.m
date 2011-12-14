@@ -1,15 +1,14 @@
 //
-//  ClassicGameScene.m
+//  OptionsScene.m
 //  Chainz
 //
-//  Created by Pedro Gomes on 12/13/11.
+//  Created by Pedro Gomes on 12/14/11.
 //  Copyright (c) 2011 Phluid Labs. All rights reserved.
 //
 
-#import "ClassicGameScene.h"
-#import "GameBoard.h"
+#import "OptionsScene.h"
 
-@implementation ClassicGameScene
+@implementation OptionsScene
 
 #pragma mark - Class Methods
 
@@ -18,7 +17,7 @@
 + (CCScene *)scene
 {
 	CCScene *scene = [CCScene node];
-	ClassicGameScene *layer = [ClassicGameScene node];
+	OptionsScene *layer = [OptionsScene node];
 	[scene addChild:layer];
 	
 	return scene;
@@ -28,9 +27,8 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-- (void) dealloc
+- (void)dealloc
 {
-	[_gameboard release];
 	[super dealloc];
 }
 
@@ -39,20 +37,7 @@
 - (id)init
 {
 	if((self = [super init])) {
-		
-		_gameboard = [[GameBoard alloc] init];
-		[self addChild:_gameboard];
-//		// create and initialize a Label
-//		CCLabelTTF *label = [CCLabelTTF labelWithString:@"Hello World" fontName:@"Marker Felt" fontSize:64];
-//		
-//		// ask director the the window size
-//		CGSize size = [[CCDirector sharedDirector] winSize];
-//		
-//		// position the label on the center of the screen
-//		label.position =  ccp( size.width /2 , size.height/2 );
-//		
-//		// add the label as a child to this Layer
-//		[self addChild: label];
+
 	}
 	return self;
 }

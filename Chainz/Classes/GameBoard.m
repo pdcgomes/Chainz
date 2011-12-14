@@ -8,6 +8,7 @@
 
 #import "GameBoard.h"
 #import "Gem.h"
+#import "CCDrawingPrimitives.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Constants and definitions
@@ -28,6 +29,7 @@ static void swap(NSInteger *a, NSInteger *b)
 ////////////////////////////////////////////////////////////////////////////////
 @interface GameBoard()
 
+- (void)_updateAllValidMoves;
 - (BOOL)_isValidMove:(CGPoint)p1 p2:(CGPoint)p2;
 - (NSMutableDictionary *)_findAllValidMoves;
 - (NSMutableDictionary *)_findAllChains;
@@ -39,6 +41,8 @@ static void swap(NSInteger *a, NSInteger *b)
 
 // Used by simulateGameplay, but to be deprecated
 - (NSDictionary *)_findAllSequences;
+
+- (void)_drawGameboardGrid;
 
 @end
 
@@ -52,7 +56,7 @@ static void swap(NSInteger *a, NSInteger *b)
 ////////////////////////////////////////////////////////////////////////////////
 - (void)dealloc
 {
-	[_validMoves release];
+	[_validMovesLookupTable release];
 	[super dealloc];
 }
 
@@ -64,6 +68,37 @@ static void swap(NSInteger *a, NSInteger *b)
 		[self resetGameBoard];
 	}
 	return self;
+}
+
+#pragma mark - CCNode
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)draw
+{
+	[super draw];
+	[self _drawGameboardGrid];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Just a helper grid
+////////////////////////////////////////////////////////////////////////////////
+- (void)_drawGameboardGrid
+{
+	CGSize windowSize = [[CCDirector sharedDirector] winSize];
+	
+	CGPoint borderVertices[4] = {{1,1}, {windowSize.width-1, 1}, {windowSize.width-1, windowSize.height-1}, {1, windowSize.height-1}};
+	ccDrawPoly(borderVertices, 4, YES);
+	
+	CGFloat gridHeight = windowSize.height - (windowSize.width/2.0);
+	CGFloat gridSpacing = 40.0;
+	NSInteger x, y;
+	for(x = 1; x < GAMEBOARD_NUM_COLS; x++) {
+		ccDrawLine((CGPoint){x*gridSpacing, 0}, (CGPoint){x*gridSpacing, gridHeight});
+	}
+	for(y = 1; y <= GAMEBOARD_NUM_ROWS; y++) {
+		ccDrawLine((CGPoint){0, (y*gridSpacing)}, (CGPoint){windowSize.width, (y*gridSpacing)});
+	}
 }
 
 #pragma mark - Public Methods
@@ -87,8 +122,8 @@ static void swap(NSInteger *a, NSInteger *b)
 	while(!boardReady) {
 		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 		
-		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
-			for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
+		for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
+			for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
 				_board[x][y] = arc4random()%GemColorCount;
 			}
 		}
@@ -112,6 +147,7 @@ static void swap(NSInteger *a, NSInteger *b)
 		
 		[pool drain];
 	}
+	[self printBoard];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +158,12 @@ static void swap(NSInteger *a, NSInteger *b)
 ////////////////////////////////////////////////////////////////////////////////
 - (void)swapGemAtPoint:(CGPoint)node1 withGemAtPoint:(CGPoint)node2
 {
-	swap(&_board[(NSInteger)node1.x][(NSInteger)node1.y], &_board[(NSInteger)node2.x][(NSInteger)node2.y]);
+	// TODO: lookup _validMovesLookupTable, if it's not a valid movement 
+	// we simply schedule two animations (swap node1 <-> node2, swap node2 <-> node1)
+	// else, compute the actual chains, clear them, etc.
+
+//	swap(&_board[(NSInteger)node1.x][(NSInteger)node1.y], &_board[(NSInteger)node2.x][(NSInteger)node2.y]);
+	CC_SWAP(_board[(NSInteger)node1.x][(NSInteger)node1.y], _board[(NSInteger)node2.x][(NSInteger)node2.y]);
 	// schedule the swap animation here
 	
 	NSArray *node1Sequences = [self _floodFill:node1 color:_board[(NSInteger)node1.x][(NSInteger)node1.y]];
@@ -132,7 +173,8 @@ static void swap(NSInteger *a, NSInteger *b)
 	NSArray *node2Chain = [self _findAllChainsForSequence:node2Sequences];
 	
 	if([node1Chain count] + [node2Chain count] == 0) {
-		swap(&_board[(NSInteger)node1.x][(NSInteger)node1.y], &_board[(NSInteger)node2.x][(NSInteger)node2.y]);
+//		swap(&_board[(NSInteger)node1.x][(NSInteger)node1.y], &_board[(NSInteger)node2.x][(NSInteger)node2.y]);	
+		CC_SWAP(_board[(NSInteger)node1.x][(NSInteger)node1.y], _board[(NSInteger)node2.x][(NSInteger)node2.y]);
 		// schedule the swap animation here
 	}
 	else {
@@ -144,7 +186,6 @@ static void swap(NSInteger *a, NSInteger *b)
 	}
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Iterates the whole board and generates new gems for all cells marked as cleared (-1)
 // Schedules the drop down animation of all generated gems
@@ -155,6 +196,7 @@ static void swap(NSInteger *a, NSInteger *b)
 	for(NSString *pointStr in generatedGems) {
 		// Create the actual gem sprite, add it outside the gameboard and schedule
 		// a drop animation action to the destination point
+		// note that at this stage the 
 	}
 }
 
@@ -199,8 +241,8 @@ static void swap(NSInteger *a, NSInteger *b)
 - (void)generateGemsForClearedCells
 {
 	NSInteger x, y;
-	for(x = 0; x < GAMEBOARD_NUM_ROWS; x++) {
-		for(y = 0; y < GAMEBOARD_NUM_COLS; y++) {
+	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
+		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
 			if(_board[x][y] == -1) {
 				_board[x][y] = arc4random()%GemColorCount;
 			}
@@ -275,8 +317,8 @@ static void swap(NSInteger *a, NSInteger *b)
 	unsigned int x, y;
 	
 	NSMutableString	*matrixStr = [[NSMutableString alloc] initWithString:@"\n"];
-	for(y = 0; y < GAMEBOARD_NUM_COLS; y++) {
-		for(x = 0; x < GAMEBOARD_NUM_ROWS; x++) {
+	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
+		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
 			[matrixStr appendFormat:@"[%2d] ", _board[x][y]];
 		}
 		[matrixStr appendString:@"\n"];
@@ -375,8 +417,8 @@ static void swap(NSInteger *a, NSInteger *b)
 ////////////////////////////////////////////////////////////////////////////////
 - (NSArray *)_findAllChainsForSequence:(NSArray *)sequence
 {
-	NSLog(@"***** FINDING ALL VALID CHAINS *****");
-	NSLog(@"sequence = %@", sequence);
+//	NSLog(@"***** FINDING ALL VALID CHAINS *****");
+//	NSLog(@"sequence = %@", sequence);
 	
 	NSArray *sortedByColumns = [sequence sortedArrayWithOptions:NSSortStable usingComparator:(NSComparator)^(id obj1, id obj2) {
 		CGPoint p1 = CGPointFromString(obj1);
@@ -394,7 +436,7 @@ static void swap(NSInteger *a, NSInteger *b)
 	}];
 	//	NSLog(@"sortedByColumns = %@", sortedByColumns);
 	
-	NSArray *sortedByRows = [sequence sortedArrayUsingComparator:(NSComparator)^(id obj1, id obj2) {
+	NSArray *sortedByRows = [sequence sortedArrayWithOptions:NSSortStable usingComparator:(NSComparator)^(id obj1, id obj2) {
 		CGPoint p1 = CGPointFromString(obj1);
 		CGPoint p2 = CGPointFromString(obj2);
 		
@@ -448,7 +490,7 @@ static void swap(NSInteger *a, NSInteger *b)
 	}
 	[tmpStack release];
 	
-	NSLog(@"chain = %@", chain);
+//	NSLog(@"chain = %@", chain);
 	
 	return [chain autorelease];
 }
@@ -504,10 +546,25 @@ static void swap(NSInteger *a, NSInteger *b)
 ////////////////////////////////////////////////////////////////////////////////
 // Inspects the whole board and returns a collection of all valid moves:
 // [point] => [list of all valid adjacent swaps]
+// NOTE: consider turning this in an updateAllValidMoves method and cache the results
+// any subsequent movement attempt would only require a dictionary lookup
+// after all chains are processed, we would invoke this method agan to recompute
+// all valid moves - this would also make the job of handing tips to the user a lot easier
 ////////////////////////////////////////////////////////////////////////////////
 - (NSDictionary *)_findAllValidMoves
 {
-	NSMutableDictionary *moves = [[NSMutableDictionary alloc] init];
+	[self _updateAllValidMoves];
+	return _validMovesLookupTable;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)_updateAllValidMoves
+{
+	if(!_validMovesLookupTable) {
+		_validMovesLookupTable = [[NSMutableDictionary alloc] init];
+	}
+	[_validMovesLookupTable removeAllObjects];
 	
 	NSUInteger x, y;
 	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
@@ -527,12 +584,11 @@ static void swap(NSInteger *a, NSInteger *b)
 				[movesForPoint addObject:NSStringFromCGPoint((CGPoint){x, y-1})];
 			}
 			if([movesForPoint count] > 0) {
-				[moves setObject:movesForPoint forKey:NSStringFromCGPoint(p)];
+				[_validMovesLookupTable setObject:movesForPoint forKey:NSStringFromCGPoint(p)];
 			}
 			[movesForPoint release];
 		}
 	}
-	return [moves autorelease];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -545,7 +601,8 @@ static void swap(NSInteger *a, NSInteger *b)
 	if(!gameboardContainsPoints) {
 		return NO;
 	}
-	swap(&_board[(NSInteger)p1.x][(NSInteger)p1.y], &_board[(NSInteger)p2.x][(NSInteger)p2.y]);
+//	swap(&_board[(NSInteger)p1.x][(NSInteger)p1.y], &_board[(NSInteger)p2.x][(NSInteger)p2.y]);
+	CC_SWAP(_board[(NSInteger)p1.x][(NSInteger)p1.y], _board[(NSInteger)p2.x][(NSInteger)p2.y]);
 	
 	NSArray *p1Sequences = [self _floodFill:p1 color:_board[(NSInteger)p1.x][(NSInteger)p1.y]];
 	NSArray *p2Sequences = [self _floodFill:p2 color:_board[(NSInteger)p2.x][(NSInteger)p2.y]];	
@@ -553,7 +610,8 @@ static void swap(NSInteger *a, NSInteger *b)
 	NSArray *p1Chain = [self _findAllChainsForSequence:p1Sequences];
 	NSArray *p2Chain = [self _findAllChainsForSequence:p2Sequences];
 
-	swap(&_board[(NSInteger)p2.x][(NSInteger)p2.y], &_board[(NSInteger)p1.x][(NSInteger)p1.y]);
+//	swap(&_board[(NSInteger)p2.x][(NSInteger)p2.y], &_board[(NSInteger)p1.x][(NSInteger)p1.y]);
+	CC_SWAP(_board[(NSInteger)p2.x][(NSInteger)p2.y], _board[(NSInteger)p1.x][(NSInteger)p1.y]);
 	
 	return ([p1Chain count] + [p2Chain count] > 0);
 }

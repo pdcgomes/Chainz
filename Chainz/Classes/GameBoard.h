@@ -17,8 +17,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 @interface GameBoard : CCSprite
 {
-	NSInteger			_board[GAMEBOARD_NUM_COLS][GAMEBOARD_NUM_ROWS];
-	NSMutableDictionary	*_validMoves;
+	NSInteger				_board[GAMEBOARD_NUM_COLS][GAMEBOARD_NUM_ROWS];
+	NSMutableDictionary		*_validMovesLookupTable;
 }
 
 - (void)resetGameBoard;
