@@ -18,6 +18,7 @@
 @interface GameBoard : CCSprite
 {
 	NSInteger				_board[GAMEBOARD_NUM_COLS][GAMEBOARD_NUM_ROWS];
+	NSMutableArray			*_gems;
 	NSMutableDictionary		*_validMovesLookupTable;
 }
 

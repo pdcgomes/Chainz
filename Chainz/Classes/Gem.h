@@ -35,14 +35,14 @@ typedef enum {
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-@class Gameboard;
+@class GameBoard;
 @interface Gem : CCSprite
 {
 	GemKind				_kind;
 	GemColor			_color;
 	GemAttribute		_attributes;
 	
-	__weak Gameboard	*_gameboard;
+	__weak GameBoard	*_gameboard;
 	CGPoint				_point;
 }
 
@@ -51,9 +51,9 @@ typedef enum {
 @property (nonatomic, readonly) GemAttribute attributes;
 @property (nonatomic, assign) CGPoint point;
 
-- (id)initWithGameboard:(Gameboard *)gameboard position:(CGPoint)point kind:(GemKind)kind;
-- (id)initWithGameboard:(Gameboard *)gameboard position:(CGPoint)point kind:(GemKind)kind color:(GemColor)color;
-- (id)initWithGameboard:(Gameboard *)gameboard position:(CGPoint)point kind:(GemKind)kind color:(GemColor)color attributes:(GemAttribute)attribute;
+- (id)initWithGameboard:(GameBoard *)gameboard position:(CGPoint)point kind:(GemKind)kind;
+- (id)initWithGameboard:(GameBoard *)gameboard position:(CGPoint)point kind:(GemKind)kind color:(GemColor)color;
+- (id)initWithGameboard:(GameBoard *)gameboard position:(CGPoint)point kind:(GemKind)kind color:(GemColor)color attributes:(GemAttribute)attribute;
 
 - (void)updatePosition:(CGPoint)point;
 

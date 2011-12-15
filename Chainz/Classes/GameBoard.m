@@ -27,6 +27,26 @@ static void swap(NSInteger *a, NSInteger *b)
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+static NSInteger GemIndexForBoardPosition(CGPoint p) 
+{
+	return p.x*GAMEBOARD_NUM_COLS + p.y;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+#define GEM_SPACING 20.0
+static CGPoint CoordinatesForGemAtPosition(CGPoint p) 
+{
+	CGSize windowSize = [[CCDirector sharedDirector] winSize];
+	CGFloat yOrigin = (windowSize.height - windowSize.width)-GEM_SPACING;
+	CGFloat x = p.x*GEM_SPACING+1;
+	CGFloat y = yOrigin - p.y*GEM_SPACING;
+	
+	return CGPointMake(x, y);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 @interface GameBoard()
 
 - (void)_updateAllValidMoves;
@@ -148,6 +168,20 @@ static void swap(NSInteger *a, NSInteger *b)
 		[pool drain];
 	}
 	[self printBoard];
+	
+	if(!_gems) {
+		_gems = [[NSMutableArray alloc] initWithCapacity:GAMEBOARD_NUM_ROWS*GAMEBOARD_NUM_COLS];
+	}
+	
+	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
+		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
+			Gem *gem = [[Gem alloc] initWithGameboard:self position:(CGPoint){x,y} kind:GemKindNormal color:_board[x][y]];
+			gem.position = CoordinatesForGemAtPosition((CGPoint){x,y});
+			[self addChild:gem];
+			[_gems addObject:gem];
+			[gem release];
+		}
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -165,6 +199,7 @@ static void swap(NSInteger *a, NSInteger *b)
 //	swap(&_board[(NSInteger)node1.x][(NSInteger)node1.y], &_board[(NSInteger)node2.x][(NSInteger)node2.y]);
 	CC_SWAP(_board[(NSInteger)node1.x][(NSInteger)node1.y], _board[(NSInteger)node2.x][(NSInteger)node2.y]);
 	// schedule the swap animation here
+	[_gems exchangeObjectAtIndex:GemIndexForBoardPosition(node1) withObjectAtIndex:GemIndexForBoardPosition(node2)];
 	
 	NSArray *node1Sequences = [self _floodFill:node1 color:_board[(NSInteger)node1.x][(NSInteger)node1.y]];
 	NSArray *node2Sequences = [self _floodFill:node2 color:_board[(NSInteger)node2.x][(NSInteger)node2.y]];	
@@ -175,6 +210,7 @@ static void swap(NSInteger *a, NSInteger *b)
 	if([node1Chain count] + [node2Chain count] == 0) {
 //		swap(&_board[(NSInteger)node1.x][(NSInteger)node1.y], &_board[(NSInteger)node2.x][(NSInteger)node2.y]);	
 		CC_SWAP(_board[(NSInteger)node1.x][(NSInteger)node1.y], _board[(NSInteger)node2.x][(NSInteger)node2.y]);
+		[_gems exchangeObjectAtIndex:GemIndexForBoardPosition(node2) withObjectAtIndex:GemIndexForBoardPosition(node1)];
 		// schedule the swap animation here
 	}
 	else {

@@ -7,6 +7,8 @@
 //
 
 #import "Gem.h"
+#import "GameBoard.h"
+#import "CCDrawingPrimitives.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -29,21 +31,21 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-- (id)initWithGameboard:(Gameboard *)gameboard position:(CGPoint)point kind:(GemKind)kind
+- (id)initWithGameboard:(GameBoard *)gameboard position:(CGPoint)point kind:(GemKind)kind
 {
 	return [self initWithGameboard:gameboard position:point kind:kind color:arc4random()%GemColorCount attributes:GemBoostNone];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-- (id)initWithGameboard:(Gameboard *)gameboard position:(CGPoint)point kind:(GemKind)kind color:(GemColor)color
+- (id)initWithGameboard:(GameBoard *)gameboard position:(CGPoint)point kind:(GemKind)kind color:(GemColor)color
 {
 	return [self initWithGameboard:gameboard position:point kind:kind color:color attributes:GemBoostNone];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-- (id)initWithGameboard:(Gameboard *)gameboard position:(CGPoint)point kind:(GemKind)kind color:(GemColor)color attributes:(GemAttribute)attribute
+- (id)initWithGameboard:(GameBoard *)gameboard position:(CGPoint)point kind:(GemKind)kind color:(GemColor)color attributes:(GemAttribute)attribute
 {
 	if((self = [super init])) {
 		// TODO: load the actual texture/image
@@ -55,6 +57,20 @@
 	return self;
 }
 
+#pragma mark - CCNode
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)draw
+{
+	[super draw];
+	
+	glColor4ub(63, 63, 63, 255);
+	CGFloat radius = 20.0;
+	CGFloat segments = 10;
+	ccDrawCircle((CGPoint){self.position.x + radius, self.position.y + radius}, radius, 0, segments, YES);
+}
+
 #pragma mark - Public Methods
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -63,5 +79,8 @@
 {
 	
 }
+
+#pragma mark - Animations and Effects
+
 
 @end
