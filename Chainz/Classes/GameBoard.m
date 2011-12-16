@@ -71,9 +71,11 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 - (void)_updateAllValidMoves;
 - (BOOL)_isValidMove:(CGPoint)p1 p2:(CGPoint)p2;
 - (NSMutableDictionary *)_findAllValidMoves;
-- (NSMutableDictionary *)_findAllChains;
-- (NSArray *)_findAllChainsForSequence:(NSArray *)sequence;
+
 - (NSArray *)_floodFill:(CGPoint)node color:(NSInteger)color;
+- (NSArray *)_findAllChainsForSequence:(NSArray *)sequence;
+- (NSArray *)_findAllChainsFromPoint:(CGPoint)point;
+- (NSMutableDictionary *)_findAllChains;
 
 - (void)_dropDanglingGems;
 - (void)_generateAndDropDownGemsForClearedChains;
@@ -214,39 +216,42 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 // Is so, clears the resulting chain, and readjusts the board (drops gems above cleared ones)
 // and also generates gems for the resulting empty cells
 ////////////////////////////////////////////////////////////////////////////////
-- (void)swapGemAtPoint:(CGPoint)node1 withGemAtPoint:(CGPoint)node2
+- (void)swapGemAtPoint:(CGPoint)point1 withGemAtPoint:(CGPoint)point2
 {
 	// TODO: lookup _validMovesLookupTable, if it's not a valid movement 
 	// we simply schedule two animations (swap node1 <-> node2, swap node2 <-> node1)
 	// else, compute the actual chains, clear them, etc.
 
 //	swap(&_board[(NSInteger)node1.x][(NSInteger)node1.y], &_board[(NSInteger)node2.x][(NSInteger)node2.y]);
-	CC_SWAP(_board[(NSInteger)node1.x][(NSInteger)node1.y], _board[(NSInteger)node2.x][(NSInteger)node2.y]);
+	CC_SWAP(_board[(NSInteger)point1.x][(NSInteger)point1.y], _board[(NSInteger)point2.x][(NSInteger)point2.y]);
 	// schedule the swap animation here
 //	[_gems exchangeObjectAtIndex:GemIndexForBoardPosition(node1) withObjectAtIndex:GemIndexForBoardPosition(node2)];
 	
-	NSInteger indexGem1 = GemIndexForBoardPosition(node1);
-	NSInteger indexGem2 = GemIndexForBoardPosition(node2);
+	NSInteger indexGem1 = GemIndexForBoardPosition(point1);
+	NSInteger indexGem2 = GemIndexForBoardPosition(point2);
 	
 	Gem *gem1 = [_gems objectAtIndex:indexGem1];
 	Gem *gem2 = [_gems objectAtIndex:indexGem2];
 	[_gems exchangeObjectAtIndex:indexGem1 withObjectAtIndex:indexGem2];
     CC_SWAP(gem1.point, gem2.point);
 
-	NSArray *node1Sequences = [self _floodFill:node1 color:_board[(NSInteger)node1.x][(NSInteger)node1.y]];
-	NSArray *node2Sequences = [self _floodFill:node2 color:_board[(NSInteger)node2.x][(NSInteger)node2.y]];	
+//	NSArray *node1Sequences = [self _floodFill:node1 color:_board[(NSInteger)node1.x][(NSInteger)node1.y]];
+//	NSArray *node2Sequences = [self _floodFill:node2 color:_board[(NSInteger)node2.x][(NSInteger)node2.y]];	
+//	
+//	NSArray *node1Chain = [self _findAllChainsForSequence:node1Sequences];
+//	NSArray *node2Chain = [self _findAllChainsForSequence:node2Sequences];
 	
-	NSArray *node1Chain = [self _findAllChainsForSequence:node1Sequences];
-	NSArray *node2Chain = [self _findAllChainsForSequence:node2Sequences];
+	NSArray *point1Chain = [self _findAllChainsFromPoint:point1];
+	NSArray *point2Chain = [self _findAllChainsFromPoint:point2];
 
 	id swapGem1Action = [CCMoveTo actionWithDuration:0.4 position:gem2.position];
-	id swapGem1ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem1.position];
-	
 	id swapGem2Action = [CCMoveTo actionWithDuration:0.4 position:gem1.position];
-	id swapGem2ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem2.position];
+	
+	if([point1Chain count] + [point2Chain count] == 0) {
+		id swapGem1ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem1.position];
+		id swapGem2ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem2.position];
 
-	if([node1Chain count] + [node2Chain count] == 0) {
-		CC_SWAP(_board[(NSInteger)node1.x][(NSInteger)node1.y], _board[(NSInteger)node2.x][(NSInteger)node2.y]);
+		CC_SWAP(_board[(NSInteger)point1.x][(NSInteger)point1.y], _board[(NSInteger)point2.x][(NSInteger)point2.y]);
         CC_SWAP(gem1.point, gem2.point);
 		[_gems exchangeObjectAtIndex:indexGem1 withObjectAtIndex:indexGem2];
 		
@@ -262,9 +267,9 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 
 		double delayInSeconds = 0.41;
 		dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-		dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-			[self clearChain:node1 sequence:node1Chain];
-			[self clearChain:node2 sequence:node2Chain];
+		dispatch_after(popTime, dispatch_get_main_queue(), ^(void) {
+			[self clearChain:point1 sequence:point1Chain];
+			[self clearChain:point2 sequence:point2Chain];
 			[self _dropDanglingGems];
 			[self _generateAndDropDownGemsForClearedChains];
 			
@@ -642,6 +647,14 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 //	NSLog(@"chain = %@", chain);
 	
 	return [chain autorelease];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (NSArray *)_findAllChainsFromPoint:(CGPoint)point
+{
+	NSArray *sequences = [self _floodFill:point color:_board[(NSInteger)point.x][(NSInteger)point.y]];
+	return [self _findAllChainsForSequence:sequences];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
