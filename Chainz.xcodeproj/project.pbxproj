@@ -15,7 +15,6 @@
 		0DA5D27B1493921E003D7678 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DA5D27A1493921E003D7678 /* UIKit.framework */; };
 		0DA5D27D1493921E003D7678 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DA5D27C1493921E003D7678 /* Foundation.framework */; };
 		0DA5D27F1493921E003D7678 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DA5D27E1493921E003D7678 /* CoreGraphics.framework */; };
-		0DA5D2831493921F003D7678 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DA5D2821493921F003D7678 /* Default.png */; };
 		0DA5D2851493921F003D7678 /* fps_images.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DA5D2841493921F003D7678 /* fps_images.png */; };
 		0DA5D2871493921F003D7678 /* fps_images-hd.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DA5D2861493921F003D7678 /* fps_images-hd.png */; };
 		0DA5D2891493921F003D7678 /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DA5D2881493921F003D7678 /* Icon-72.png */; };
@@ -157,6 +156,8 @@
 		0DA9CCF61497C2D6004AC6EA /* ClassicGameScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA9CCF51497C2D6004AC6EA /* ClassicGameScene.m */; };
 		0DA9CCF91498C75D004AC6EA /* OptionsScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA9CCF81498C75C004AC6EA /* OptionsScene.m */; };
 		0DA9CCFC1498C76E004AC6EA /* HighscoresScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA9CCFB1498C76E004AC6EA /* HighscoresScene.m */; };
+		0DA9CCFF149A1E95004AC6EA /* ball-hd.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DA9CCFD149A1E94004AC6EA /* ball-hd.png */; };
+		0DA9CD00149A1E95004AC6EA /* ball.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DA9CCFE149A1E95004AC6EA /* ball.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -434,6 +435,8 @@
 		0DA9CCF81498C75C004AC6EA /* OptionsScene.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OptionsScene.m; path = Classes/OptionsScene.m; sourceTree = "<group>"; };
 		0DA9CCFA1498C76E004AC6EA /* HighscoresScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HighscoresScene.h; path = Classes/HighscoresScene.h; sourceTree = "<group>"; };
 		0DA9CCFB1498C76E004AC6EA /* HighscoresScene.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = HighscoresScene.m; path = Classes/HighscoresScene.m; sourceTree = "<group>"; };
+		0DA9CCFD149A1E94004AC6EA /* ball-hd.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ball-hd.png"; sourceTree = "<group>"; };
+		0DA9CCFE149A1E95004AC6EA /* ball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ball.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -504,6 +507,8 @@
 		0DA5D2811493921F003D7678 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				0DA9CCFD149A1E94004AC6EA /* ball-hd.png */,
+				0DA9CCFE149A1E95004AC6EA /* ball.png */,
 				0DA5D2821493921F003D7678 /* Default.png */,
 				0DA5D2841493921F003D7678 /* fps_images.png */,
 				0DA5D2861493921F003D7678 /* fps_images-hd.png */,
@@ -963,7 +968,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0DA5D2831493921F003D7678 /* Default.png in Resources */,
 				0DA5D2851493921F003D7678 /* fps_images.png in Resources */,
 				0DA5D2871493921F003D7678 /* fps_images-hd.png in Resources */,
 				0DA5D2891493921F003D7678 /* Icon-72.png in Resources */,
@@ -1001,6 +1005,8 @@
 				0DA5D2CB1493921F003D7678 /* Twist.fsh in Resources */,
 				0DA5D2CD1493921F003D7678 /* Twist.vsh in Resources */,
 				0DA5D3F014939225003D7678 /* ChangeLog in Resources */,
+				0DA9CCFF149A1E95004AC6EA /* ball-hd.png in Resources */,
+				0DA9CD00149A1E95004AC6EA /* ball.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1163,6 +1169,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CODE_SIGN_IDENTITY = "iPhone Developer: Pedro Gomes (SL544X5FV6)";
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -1172,6 +1179,7 @@
 				INFOPLIST_FILE = Chainz/Resources/Info.plist;
 				OTHER_LDFLAGS = "-lz";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "E92E901C-5AA5-4D9A-8310-A23A3F26716C";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -1180,6 +1188,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CODE_SIGN_IDENTITY = "iPhone Developer: Pedro Gomes (SL544X5FV6)";
 				COPY_PHASE_STRIP = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Chainz/Prefix.pch;
@@ -1188,6 +1197,7 @@
 				INFOPLIST_FILE = Chainz/Resources/Info.plist;
 				OTHER_LDFLAGS = "-lz";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "E92E901C-5AA5-4D9A-8310-A23A3F26716C";
 				VALIDATE_PRODUCT = YES;
 				WRAPPER_EXTENSION = app;
 			};

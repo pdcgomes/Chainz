@@ -6,17 +6,33 @@
 //  Copyright (c) 2011 Phluid Labs. All rights reserved.
 //
 
-#import "CCSprite.h"
-@class Gem;
+#import "cocos2d.h"
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+typedef enum {
+	GameboardMovementDirectionLeft,
+	GameboardMovementDirectionRight,
+	GameboardMovementDirectionUp,
+	GameboardMovementDirectionDown,
+	GameboardMovementDirectionInvalid,
+} GameboardMovementDirection;
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 #define GAMEBOARD_NUM_ROWS	8
 #define GAMEBOARD_NUM_COLS	8
 
+extern const NSInteger 	kGameboardNumberOfRows;
+extern const NSInteger 	kGameboardNumberOfCols;
+extern const CGSize		kGameboardCellSize;
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-@interface GameBoard : CCSprite
+@class Gem;
+@interface GameBoard : CCLayer
 {
+	BOOL					_initialized;
 	NSInteger				_board[GAMEBOARD_NUM_COLS][GAMEBOARD_NUM_ROWS];
 	NSMutableArray			*_gems;
 	NSMutableDictionary		*_validMovesLookupTable;
@@ -24,6 +40,7 @@
 
 - (void)resetGameBoard;
 - (void)swapGemAtPoint:(CGPoint)gem1 withGemAtPoint:(CGPoint)gem2;
+- (BOOL)moveGemAtPoint:(CGPoint)point withDirection:(GameboardMovementDirection)direction;
 
 - (void)clearChain:(CGPoint)point sequence:(NSArray *)sequence;
 - (void)siftDownGemsAboveClearedCells;

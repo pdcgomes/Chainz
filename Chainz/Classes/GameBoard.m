@@ -13,7 +13,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Constants and definitions
 ////////////////////////////////////////////////////////////////////////////////
-const NSUInteger kGameboardMinSequence = 3;
+const NSUInteger 	kGameboardMinSequence 	= 3;
+
+const NSInteger 	kGameboardNumberOfRows	= 8;
+const NSInteger 	kGameboardNumberOfCols	= 8;
+const CGSize		kGameboardCellSize		= {40.0, 40.0};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helper functions
@@ -34,15 +38,30 @@ static NSInteger GemIndexForBoardPosition(CGPoint p)
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#define GEM_SPACING 20.0
+#define GEM_SPACING 40.0
 static CGPoint CoordinatesForGemAtPosition(CGPoint p) 
 {
 	CGSize windowSize = [[CCDirector sharedDirector] winSize];
-	CGFloat yOrigin = (windowSize.height - windowSize.width)-GEM_SPACING;
-	CGFloat x = p.x*GEM_SPACING+1;
-	CGFloat y = yOrigin - p.y*GEM_SPACING;
-	
+//	CGFloat yOrigin = (windowSize.height - windowSize.width)-GEM_SPACING;
+	CGFloat x = p.x*GEM_SPACING+1 + 12;
+	CGFloat y = GEM_SPACING*(GAMEBOARD_NUM_ROWS-1) - p.y*GEM_SPACING + 12;
 	return CGPointMake(x, y);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+static CGPoint CoordinatesForWindowLocation(CGPoint p)
+{
+	CGSize windowSize = [[CCDirector sharedDirector] winSize];
+	CGRect rect = CGRectMake(0, 0, windowSize.width, windowSize.width);
+	if(!CGRectContainsPoint(rect, p)) {
+		return (CGPoint){NSNotFound, NSNotFound};
+	}
+
+	CGFloat x = GAMEBOARD_NUM_COLS - floor((rect.size.width - p.x)/GEM_SPACING) - 1;
+	CGFloat y = floor((rect.size.height - p.y)/GEM_SPACING);
+	
+	return (CGPoint){x, y};
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -85,7 +104,8 @@ static CGPoint CoordinatesForGemAtPosition(CGPoint p)
 - (id)init
 {
 	if((self = [super init])) {
-		[self resetGameBoard];
+//		[self resetGameBoard];
+//		self.isTouchEnabled = YES;
 	}
 	return self;
 }
@@ -176,7 +196,10 @@ static CGPoint CoordinatesForGemAtPosition(CGPoint p)
 	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
 			Gem *gem = [[Gem alloc] initWithGameboard:self position:(CGPoint){x,y} kind:GemKindNormal color:_board[x][y]];
+			gem.anchorPoint = CGPointZero;
 			gem.position = CoordinatesForGemAtPosition((CGPoint){x,y});
+			
+//			CCLOG(@"%@ = %@, c = %d", NSStringFromCGPoint(gem.point), NSStringFromCGPoint(gem.position), gem.gemColor);
 			[self addChild:gem];
 			[_gems addObject:gem];
 			[gem release];
@@ -199,27 +222,98 @@ static CGPoint CoordinatesForGemAtPosition(CGPoint p)
 //	swap(&_board[(NSInteger)node1.x][(NSInteger)node1.y], &_board[(NSInteger)node2.x][(NSInteger)node2.y]);
 	CC_SWAP(_board[(NSInteger)node1.x][(NSInteger)node1.y], _board[(NSInteger)node2.x][(NSInteger)node2.y]);
 	// schedule the swap animation here
-	[_gems exchangeObjectAtIndex:GemIndexForBoardPosition(node1) withObjectAtIndex:GemIndexForBoardPosition(node2)];
+//	[_gems exchangeObjectAtIndex:GemIndexForBoardPosition(node1) withObjectAtIndex:GemIndexForBoardPosition(node2)];
 	
+	NSInteger indexGem1 = GemIndexForBoardPosition(node1);
+	NSInteger indexGem2 = GemIndexForBoardPosition(node2);
+	
+	Gem *gem1 = [_gems objectAtIndex:indexGem1];
+	Gem *gem2 = [_gems objectAtIndex:indexGem2];
+	[_gems exchangeObjectAtIndex:indexGem1 withObjectAtIndex:indexGem2];
+    CC_SWAP(gem1.point, gem2.point);
+
 	NSArray *node1Sequences = [self _floodFill:node1 color:_board[(NSInteger)node1.x][(NSInteger)node1.y]];
 	NSArray *node2Sequences = [self _floodFill:node2 color:_board[(NSInteger)node2.x][(NSInteger)node2.y]];	
 	
 	NSArray *node1Chain = [self _findAllChainsForSequence:node1Sequences];
 	NSArray *node2Chain = [self _findAllChainsForSequence:node2Sequences];
+
+	id swapGem1Action = [CCMoveTo actionWithDuration:0.4 position:gem2.position];
+	id swapGem1ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem1.position];
 	
+	id swapGem2Action = [CCMoveTo actionWithDuration:0.4 position:gem1.position];
+	id swapGem2ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem2.position];
+
 	if([node1Chain count] + [node2Chain count] == 0) {
-//		swap(&_board[(NSInteger)node1.x][(NSInteger)node1.y], &_board[(NSInteger)node2.x][(NSInteger)node2.y]);	
 		CC_SWAP(_board[(NSInteger)node1.x][(NSInteger)node1.y], _board[(NSInteger)node2.x][(NSInteger)node2.y]);
-		[_gems exchangeObjectAtIndex:GemIndexForBoardPosition(node2) withObjectAtIndex:GemIndexForBoardPosition(node1)];
-		// schedule the swap animation here
+        CC_SWAP(gem1.point, gem2.point);
+		[_gems exchangeObjectAtIndex:indexGem1 withObjectAtIndex:indexGem2];
+		
+		id gem1Sequence = [CCSequence actions:swapGem1Action, swapGem1ReverseAction, nil];
+		id gem2Sequence = [CCSequence actions:swapGem2Action, swapGem2ReverseAction, nil];
+		
+		[gem1 runAction:gem1Sequence];
+		[gem2 runAction:gem2Sequence];
 	}
 	else {
-		// schedule the swap animation here
-		[self clearChain:node1 sequence:node1Chain];
-		[self clearChain:node2 sequence:node2Chain];
-		[self siftDownGemsAboveClearedCells];
-		[self _generateAndDropDownGemsForClearedChains];
+		[gem1 runAction:swapGem1Action];
+		[gem2 runAction:swapGem2Action];
+
+		double delayInSeconds = 0.41;
+		dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+		dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+			[self clearChain:node1 sequence:node1Chain];
+			[self clearChain:node2 sequence:node2Chain];
+			[self siftDownGemsAboveClearedCells];
+			[self _generateAndDropDownGemsForClearedChains];
+			
+//			BOOL done = NO;
+//			while(!done) {
+//				NSDictionary *comboChains = [self _findAllChains];
+//				if([comboChains count] == 0) break;
+//				
+//				for(NSString *pointStr in [comboChains allKeys]) {
+//					[self clearChain:CGPointFromString(pointStr) sequence:[comboChains objectForKey:pointStr]];
+//				}
+//				[self siftDownGemsAboveClearedCells];
+//			}
+//			[self _generateAndDropDownGemsForClearedChains];
+		});
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (BOOL)moveGemAtPoint:(CGPoint)point withDirection:(GameboardMovementDirection)direction
+{
+	CGPoint destPoint = point;
+	switch(direction)
+	{
+		case GameboardMovementDirectionUp:
+			if(point.y - 1 >= 0) destPoint = CGPointMake(point.x, point.y-1);
+			break;
+			
+		case GameboardMovementDirectionDown:
+			if(point.y + 1 < GAMEBOARD_NUM_ROWS) destPoint = CGPointMake(point.x, point.y+1);
+			break;
+			
+		case GameboardMovementDirectionLeft:
+			if(point.x - 1 >= 0) destPoint = CGPointMake(point.x - 1, point.y);
+			break;
+			
+		case GameboardMovementDirectionRight:
+			if(point.x + 1 < GAMEBOARD_NUM_COLS) destPoint = CGPointMake(point.x + 1, point.y);
+			break;
+
+		default: break;
+	}
+	
+	if(CGPointEqualToPoint(point, destPoint)) {
+		return NO;
+	}
+
+	[self swapGemAtPoint:point withGemAtPoint:destPoint];
+	return YES;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -265,14 +359,20 @@ static CGPoint CoordinatesForGemAtPosition(CGPoint p)
 	for(NSString *pointStr in sequence) {
 		CGPoint p = CGPointFromString(pointStr);
 		_board[(NSInteger)p.x][(NSInteger)p.y] = -1;
+		
+		NSInteger gemIndex = GemIndexForBoardPosition(p);
+		Gem *gem = [_gems objectAtIndex:gemIndex];
+		[gem removeFromParentAndCleanup:YES];
+		[_gems replaceObjectAtIndex:gemIndex withObject:[NSNull null]];
 	}
+	[self visit];
 	// schedule the clear animation
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Iterates over the whole board and generates a random gem for every position
-// TODO: add some way to be able to tweak the generation process (like a bias factor or something)
-// This way we could generate board with higher/lower number of possible matches
+// TODO: figure out a way to be able to tweak the generation process (like a bias factor or something)
+// This way we could generate boards with higher/lower number of possible matches
 ////////////////////////////////////////////////////////////////////////////////
 - (void)generateGemsForClearedCells
 {
@@ -308,6 +408,19 @@ static CGPoint CoordinatesForGemAtPosition(CGPoint p)
 				// schedule the drop down animation here
 				// or
 				// save the position update (src => destination) and return the list
+				CGPoint oldPos = {x, py};
+				CGPoint newPos = {x, y};
+				
+				NSInteger oldIndex = GemIndexForBoardPosition(oldPos);
+				NSInteger newIndex = GemIndexForBoardPosition(newPos);
+				
+				[_gems exchangeObjectAtIndex:oldIndex withObjectAtIndex:newIndex];
+				id gem = [_gems objectAtIndex:newIndex];
+				if([gem isKindOfClass:[Gem class]]) {
+					[(Gem *)gem setPoint:newPos];
+					CCMoveBy *action = [CCMoveTo actionWithDuration:0.3 position:CoordinatesForGemAtPosition(newPos)];
+					[(Gem *)gem runAction:action];
+				}
 			}
 		}
 	}
@@ -333,7 +446,6 @@ static CGPoint CoordinatesForGemAtPosition(CGPoint p)
 		NSLog(@"pos = %@", key);
 		NSLog(@"move %d", move++);
 		
-		
 		NSArray *chains = [self _findAllChainsForSequence:[matches objectForKey:key]];
 		[self clearChain:CGPointFromString(key) sequence:chains];
 		[self siftDownGemsAboveClearedCells];
@@ -353,8 +465,8 @@ static CGPoint CoordinatesForGemAtPosition(CGPoint p)
 	unsigned int x, y;
 	
 	NSMutableString	*matrixStr = [[NSMutableString alloc] initWithString:@"\n"];
-	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
-		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
+	for(y = 0; y < GAMEBOARD_NUM_COLS; y++) {
+		for(x = 0; x < GAMEBOARD_NUM_ROWS; x++) {
 			[matrixStr appendFormat:@"[%2d] ", _board[x][y]];
 		}
 		[matrixStr appendString:@"\n"];
@@ -651,5 +763,87 @@ static CGPoint CoordinatesForGemAtPosition(CGPoint p)
 	
 	return ([p1Chain count] + [p2Chain count] > 0);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//- (BOOL)ccTouchBegan:(UITouch *)touch withEvent:(UIEvent *)event
+//{
+//	CGPoint p = CoordinatesForWindowLocation([touch locationInView:touch.window]);
+//	if(CGPointEqualToPoint(p, CGPointMake(NSNotFound, NSNotFound))) {
+//		return NO;
+//	}
+//
+//	CGPoint touchLocation = [touch locationInView:touch.window];
+//	CGPoint touchLocationFlipped = {touchLocation.x, [[CCDirector sharedDirector] winSize].height - touchLocation.y};
+//	
+//
+//	return YES;
+//	
+//	CGRect spriteRect = (CGRect){self.position, rect_.size};
+//	
+//	if(CGRectContainsPoint(spriteRect, touchPointFlipped)) {
+//		CCLOG(@"Touched gem %@", NSStringFromCGPoint(self.point));
+//		_firstTouchLocation = touchPointFlipped;
+//		return YES;
+//	}
+//	return NO;
+//	
+//	CCLOG(@"Gameboard touch location = %@, sprite_frame = %@", NSStringFromCGPoint(touchPoint), NSStringFromCGRect((CGRect){self.position, rect_.size}));
+//	//	CCLOG(@"Gameboard gem index = %@", NSStringFromCGPoint(CoordinatesForWindowLocation(p)));
+//	return YES;
+//}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//- (void)ccTouchMoved:(UITouch *)touch withEvent:(UIEvent *)event
+//{
+//	_moved = YES;
+//}
+
+//////////////////////////////////////////////////////////////////////////////////
+// Note: consider moving the gem touch handling logic to the gameboard itself
+// besided the potential improvement in performance (individual gems don't have to handle touches)
+// it's probably a much more flexible design
+//////////////////////////////////////////////////////////////////////////////////
+//- (void)ccTouchEnded:(UITouch *)touch withEvent:(UIEvent *)event
+//{
+//	if(!_moved) {
+//		[self markSelected:YES];
+//	}
+//	else {
+//		CGPoint endTouchLocation = [touch locationInView:touch.window];
+//		CGPoint endTouchLocationFlipped = {endTouchLocation.x, [[CCDirector sharedDirector] winSize].height - endTouchLocation.y};
+//		
+//		// vertical or horizontal?
+//		CGFloat horizontalOffset = endTouchLocationFlipped.x - _firstTouchLocation.x;
+//		CGFloat verticalOffset = endTouchLocationFlipped.y - _firstTouchLocation.y;
+//		
+//		if(fabs(horizontalOffset) >= fabs(verticalOffset)) { // moved horizontally
+//			if(horizontalOffset > 0) {
+//				[_gameboard moveGemAtPoint:self.point withDirection:GameboardMovementDirectionRight];
+//			}
+//			else if(horizontalOffset < 0) {
+//				[_gameboard moveGemAtPoint:self.point withDirection:GameboardMovementDirectionLeft];
+//			}
+//		}
+//		else {
+//			if(horizontalOffset > 0) {
+//				[_gameboard moveGemAtPoint:self.point withDirection:GameboardMovementDirectionUp];
+//			}
+//			else if(horizontalOffset < 0) {
+//				[_gameboard moveGemAtPoint:self.point withDirection:GameboardMovementDirectionDown];
+//			}
+//		}
+//	}
+//	
+//	_firstTouchLocation = CGPointZero;
+//}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//- (void)ccTouchCancelled:(UITouch *)touch withEvent:(UIEvent *)event
+//{
+//	_firstTouchLocation = CGPointZero;
+//}
 
 @end

@@ -6,7 +6,7 @@
 //  Copyright (c) 2011 Phluid Labs. All rights reserved.
 //
 
-#import "CCSprite.h"
+#import "cocos2d.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -17,7 +17,7 @@ typedef enum {
 } GemKind;
 
 typedef enum {
-	GemColorBlack,
+	GemColorGreen,
 	GemColorBlue,
 	GemColorMagenta,
 	GemColorOrange,
@@ -36,7 +36,7 @@ typedef enum {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 @class GameBoard;
-@interface Gem : CCSprite
+@interface Gem : CCSprite <CCTargetedTouchDelegate>
 {
 	GemKind				_kind;
 	GemColor			_color;
@@ -44,18 +44,24 @@ typedef enum {
 	
 	__weak GameBoard	*_gameboard;
 	CGPoint				_point;
+	
+	BOOL				_selected;
+	BOOL				_moved;
+	CGPoint				_firstTouchLocation;
 }
 
 @property (nonatomic, readonly) GemKind kind;
 @property (nonatomic, readonly) GemColor gemColor;
 @property (nonatomic, readonly) GemAttribute attributes;
 @property (nonatomic, assign) CGPoint point;
+@property (nonatomic, readonly) BOOL selected;
 
 - (id)initWithGameboard:(GameBoard *)gameboard position:(CGPoint)point kind:(GemKind)kind;
 - (id)initWithGameboard:(GameBoard *)gameboard position:(CGPoint)point kind:(GemKind)kind color:(GemColor)color;
 - (id)initWithGameboard:(GameBoard *)gameboard position:(CGPoint)point kind:(GemKind)kind color:(GemColor)color attributes:(GemAttribute)attribute;
 
 - (void)updatePosition:(CGPoint)point;
+- (void)markSelected:(BOOL)selected;
 
 // Animations and Effects
 

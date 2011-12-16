@@ -20,6 +20,7 @@
 @synthesize gemColor 	= _color;
 @synthesize attributes	= _attributes;
 @synthesize point		= _point;
+@synthesize selected	= _selected;
 
 #pragma mark - Dealloc and Initialization
 ////////////////////////////////////////////////////////////////////////////////
@@ -47,12 +48,30 @@
 ////////////////////////////////////////////////////////////////////////////////
 - (id)initWithGameboard:(GameBoard *)gameboard position:(CGPoint)point kind:(GemKind)kind color:(GemColor)color attributes:(GemAttribute)attribute
 {
-	if((self = [super init])) {
+	CCTexture2D *texture = [[CCTextureCache sharedTextureCache] addImage:@"ball.png"];
+	if((self = [super initWithTexture:texture])) {
 		// TODO: load the actual texture/image
 		_gameboard 	= gameboard;
 		_point 		= point;
 		_color		= color;
 		_attributes	= attribute;
+
+        ccColor3B spriteColor;
+        switch(color) {
+            case GemColorRed:       spriteColor = ccRED; break;
+            case GemColorBlue:      spriteColor = ccBLUE; break;
+            case GemColorGreen:     spriteColor = ccGREEN; break;
+            case GemColorMagenta:   spriteColor = ccMAGENTA; break;
+            case GemColorOrange:    spriteColor = ccORANGE; break;
+            case GemColorPurple:    spriteColor = ccc3(132, 0, 255); break;
+            case GemColorYellow:    spriteColor = ccYELLOW; break;
+            case GemColorWhite:     spriteColor = ccWHITE;
+            default: break;
+        }
+        
+		[self setColor:spriteColor];
+		CCLabelTTF *label = [CCLabelTTF labelWithString:[NSString stringWithFormat:@"%d", color] fontName:@"Marker Felt" fontSize:12];
+		[self addChild:label];
 	}
 	return self;
 }
@@ -61,14 +80,98 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-- (void)draw
+//- (void)draw
+//{
+//	[super draw];
+//
+//	CGFloat radius = 20.0;
+//	CGFloat segments = 10;
+//	ccDrawCircle((CGPoint){self.position.x + radius, self.position.y + radius}, radius, 0, segments, YES);
+//}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)onEnter
 {
-	[super draw];
+	[[CCTouchDispatcher sharedDispatcher] addTargetedDelegate:self priority:0 swallowsTouches:YES];
+	[super onEnter];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)onExit
+{
+	[[CCTouchDispatcher sharedDispatcher] removeDelegate:self];
+	[super onExit];
+}
+
+#pragma mark - CCTargetedTouchDelegate
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (BOOL)ccTouchBegan:(UITouch *)touch withEvent:(UIEvent *)event
+{
+	CGPoint touchLocation = [touch locationInView:touch.window];
+	CGPoint touchLocationFlipped = {touchLocation.x, [[CCDirector sharedDirector] winSize].height - touchLocation.y};
+	CGRect spriteRect = (CGRect){self.position, rect_.size};
 	
-	glColor4ub(63, 63, 63, 255);
-	CGFloat radius = 20.0;
-	CGFloat segments = 10;
-	ccDrawCircle((CGPoint){self.position.x + radius, self.position.y + radius}, radius, 0, segments, YES);
+	if(CGRectContainsPoint(spriteRect, touchLocationFlipped)) {
+		CCLOG(@"Touched gem %@", NSStringFromCGPoint(self.point));
+		_firstTouchLocation = touchLocationFlipped;
+		return YES;
+	}
+	return NO;
+	
+	CCLOG(@"Gameboard touch location = %@, sprite_frame = %@", NSStringFromCGPoint(touchLocation), NSStringFromCGRect((CGRect){self.position, rect_.size}));
+//	CCLOG(@"Gameboard gem index = %@", NSStringFromCGPoint(CoordinatesForWindowLocation(p)));
+	return YES;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)ccTouchMoved:(UITouch *)touch withEvent:(UIEvent *)event
+{
+	_moved = YES;
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+// Note: consider moving the gem touch handling logic to the gameboard itself
+// besided the potential improvement in performance (individual gems don't have to handle touches)
+// it's probably a much more flexible design
+//////////////////////////////////////////////////////////////////////////////////
+- (void)ccTouchEnded:(UITouch *)touch withEvent:(UIEvent *)event
+{
+	if(!_moved) {
+		[self markSelected:YES];
+	}
+	else {
+		CGPoint endTouchLocation = [touch locationInView:touch.window];
+		CGPoint endTouchLocationFlipped = {endTouchLocation.x, [[CCDirector sharedDirector] winSize].height - endTouchLocation.y};
+		
+		// vertical or horizontal?
+		CGFloat horizontalOffset = endTouchLocationFlipped.x - _firstTouchLocation.x;
+		CGFloat verticalOffset = endTouchLocationFlipped.y - _firstTouchLocation.y;
+		
+		GameboardMovementDirection direction = GameboardMovementDirectionInvalid;
+		if(fabs(horizontalOffset) >= fabs(verticalOffset)) { // moved horizontally
+			if(horizontalOffset > 0) 		direction = GameboardMovementDirectionRight;
+			else if(horizontalOffset < 0) 	direction = GameboardMovementDirectionLeft;
+		}
+		else {
+			if(verticalOffset > 0)			direction = GameboardMovementDirectionUp;
+			else if(verticalOffset < 0) 	direction = GameboardMovementDirectionDown;
+		}
+		[_gameboard moveGemAtPoint:self.point withDirection:direction];
+	}
+	
+	_firstTouchLocation = CGPointZero;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)ccTouchCancelled:(UITouch *)touch withEvent:(UIEvent *)event
+{
+	_firstTouchLocation = CGPointZero;
 }
 
 #pragma mark - Public Methods
@@ -80,7 +183,36 @@
 	
 }
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)markSelected:(BOOL)selected
+{
+	_selected = selected;
+	if(_selected) {
+		// draw selected mode
+	}
+	else {
+		// clear selected mode
+	}
+	// notify gameboard
+}
+
 #pragma mark - Animations and Effects
+
+- (void)wobble
+{
+	
+}
+
+- (void)explode
+{
+	
+}
+
+- (void)shrink
+{
+	
+}
 
 
 @end
