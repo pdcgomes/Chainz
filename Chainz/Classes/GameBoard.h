@@ -43,7 +43,6 @@ extern const CGSize		kGameboardCellSize;
 - (BOOL)moveGemAtPoint:(CGPoint)point withDirection:(GameboardMovementDirection)direction;
 
 - (void)clearChain:(CGPoint)point sequence:(NSArray *)sequence;
-- (void)siftDownGemsAboveClearedCells;
 - (void)generateGemsForClearedCells;
 
 - (void)simulateGameplay;

@@ -75,6 +75,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 - (NSArray *)_findAllChainsForSequence:(NSArray *)sequence;
 - (NSArray *)_floodFill:(CGPoint)node color:(NSInteger)color;
 
+- (void)_dropDanglingGems;
 - (void)_generateAndDropDownGemsForClearedChains;
 - (NSMutableArray *)_generateGemsForClearedCells;
 
@@ -264,7 +265,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
 			[self clearChain:node1 sequence:node1Chain];
 			[self clearChain:node2 sequence:node2Chain];
-			[self siftDownGemsAboveClearedCells];
+			[self _dropDanglingGems];
 			[self _generateAndDropDownGemsForClearedChains];
 			
 //			BOOL done = NO;
@@ -391,7 +392,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 // Also schedules the drop down animation
 // NOTE: should we just returns the list of position updates so we can deliver them to an animator later?
 ////////////////////////////////////////////////////////////////////////////////
-- (void)siftDownGemsAboveClearedCells
+- (void)_dropDanglingGems
 {
 	NSInteger x, y;
 	[self printBoard];
@@ -448,7 +449,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		
 		NSArray *chains = [self _findAllChainsForSequence:[matches objectForKey:key]];
 		[self clearChain:CGPointFromString(key) sequence:chains];
-		[self siftDownGemsAboveClearedCells];
+		[self _dropDanglingGems];
 		[self printBoard];
 		[self generateGemsForClearedCells];
 		[self printBoard];
