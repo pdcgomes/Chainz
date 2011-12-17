@@ -10,7 +10,7 @@
 
 @interface MainMenuScene : CCLayer
 {
-	
+	CCSprite	*_backgroundSprite;	
 }
 
 + (CCScene *) scene;

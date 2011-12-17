@@ -74,7 +74,7 @@
 		
 		CHECK_GL_ERROR_DEBUG();
     }
-
+	
     return self;
 }
 
