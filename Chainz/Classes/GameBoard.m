@@ -41,7 +41,7 @@ static NSInteger GemIndexForBoardPosition(CGPoint p)
 #define GEM_SPACING 40.0
 static CGPoint CoordinatesForGemAtPosition(CGPoint p) 
 {
-	CGSize windowSize = [[CCDirector sharedDirector] winSize];
+//	CGSize windowSize = [[CCDirector sharedDirector] winSize];
 //	CGFloat yOrigin = (windowSize.height - windowSize.width)-GEM_SPACING;
 	CGFloat x = p.x*GEM_SPACING+1 + 12;
 	CGFloat y = GEM_SPACING*(GAMEBOARD_NUM_ROWS-1) - p.y*GEM_SPACING + 12;
@@ -199,7 +199,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
 			Gem *gem = [[Gem alloc] initWithGameboard:self position:(CGPoint){x,y} kind:GemKindNormal color:_board[x][y]];
-			gem.anchorPoint = CGPointZero;
+//			gem.anchorPoint = CGPointZero;
 			gem.position = CoordinatesForGemAtPosition((CGPoint){x,y});
 			
 //			CCLOG(@"%@ = %@, c = %d", NSStringFromCGPoint(gem.point), NSStringFromCGPoint(gem.position), gem.gemColor);
@@ -281,7 +281,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 //				for(NSString *pointStr in [comboChains allKeys]) {
 //					[self clearChain:CGPointFromString(pointStr) sequence:[comboChains objectForKey:pointStr]];
 //				}
-//				[self siftDownGemsAboveClearedCells];
+//				[self _dropDanglingGems];
 //			}
 //			[self _generateAndDropDownGemsForClearedChains];
 		});
@@ -332,8 +332,19 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	for(NSString *pointStr in generatedGems) {
 		// Create the actual gem sprite, add it outside the gameboard and schedule
 		// a drop animation action to the destination point
-		// note that at this stage the 
+		CGPoint boardPos = CGPointFromString(pointStr);
+		Gem *gem = [[Gem alloc] initWithGameboard:self position:boardPos kind:GemKindNormal color:_board[(NSInteger)boardPos.x][(NSInteger)boardPos.y]];
+		CGPoint dstSpritePosition = CoordinatesForGemAtPosition(gem.point);
+		CGPoint srcSpritePosition = {dstSpritePosition.x, kGameboardNumberOfRows*kGameboardCellSize.height+kGameboardCellSize.height};
+		gem.position = srcSpritePosition;
+		
+		[self addChild:gem];
+		[gem runAction:[CCMoveTo actionWithDuration:0.4 position:dstSpritePosition]];
+		
+		[_gems replaceObjectAtIndex:GemIndexForBoardPosition(boardPos) withObject:gem];
+		[gem release];
 	}
+	[self printBoard];
 }
 
 ////////////////////////////////////////////////////////////////////////////////

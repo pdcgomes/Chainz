@@ -11,6 +11,38 @@
 #import "CCDrawingPrimitives.h"
 
 ////////////////////////////////////////////////////////////////////////////////
+// Utility functions
+////////////////////////////////////////////////////////////////////////////////
+NSString *GemKindString(GemKind kind) 
+{
+	switch(kind)
+	{
+		case GemKindNormal:			return @"normal";
+		case GemKindEmpty:			return @"empty";
+		case GemKindSpecialPower:	return @"special";
+		default: return [NSString stringWithFormat:@"unknown gem kind %d", kind];
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+NSString *GemColorString(GemColor color) 
+{
+	switch(color) 
+	{
+		case GemColorBlue: 		return @"blue";
+		case GemColorRed: 		return @"red";
+		case GemColorGreen: 	return @"green";
+		case GemColorMagenta: 	return @"magenta";
+		case GemColorOrange: 	return @"orange";
+		case GemColorPurple: 	return @"purple";
+		case GemColorWhite: 	return @"white";
+		case GemColorYellow: 	return @"yellow";
+		default: return [NSString stringWithFormat:@"unknown gem color %d", color];
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 @implementation Gem
 
@@ -69,6 +101,7 @@
             default: break;
         }
         
+		[self setAnchorPoint:CGPointZero];
 		[self setColor:spriteColor];
 		CCLabelTTF *label = [CCLabelTTF labelWithString:[NSString stringWithFormat:@"%d", color] fontName:@"Marker Felt" fontSize:12];
 		[self addChild:label];
@@ -161,7 +194,10 @@
 			if(verticalOffset > 0)			direction = GameboardMovementDirectionUp;
 			else if(verticalOffset < 0) 	direction = GameboardMovementDirectionDown;
 		}
-		[_gameboard moveGemAtPoint:self.point withDirection:direction];
+		
+		if(![_gameboard moveGemAtPoint:self.point withDirection:direction]) {
+//			CCLOGINFO(@"Invalid move %@ => %@", NSStringFromCGPoint(self.point), );
+		}
 	}
 	
 	_firstTouchLocation = CGPointZero;

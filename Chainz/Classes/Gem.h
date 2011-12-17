@@ -12,9 +12,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 typedef enum {
 	GemKindNormal,
+	GemKindEmpty,
 	GemKindSpecialPower,
 	GemKindCount // must be last
-} GemKind;
+} GemKind; // not yet being used
 
 typedef enum {
 	GemColorGreen,
@@ -25,13 +26,21 @@ typedef enum {
 	GemColorRed,
 	GemColorWhite,
 	GemColorYellow,
-	GemColorCount // must be last
+	GemColorCount,
+	GemColorClear = -1, // ensure it's always defined after GemColorCount
 } GemColor;
 
 typedef enum {
 	GemBoostNone,
 	GemBoostExplosive,
 } GemAttribute;
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Utility functions
+////////////////////////////////////////////////////////////////////////////////
+extern NSString *GemKindString(GemKind kind);
+extern NSString *GemColorString(GemColor color);
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
