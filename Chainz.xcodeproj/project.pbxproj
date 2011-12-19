@@ -74,7 +74,7 @@
 		0DA5D41514939225003D7678 /* RootViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5D41414939225003D7678 /* RootViewController.m */; };
 		0DA9CCE51497603D004AC6EA /* Gem.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA9CCE41497603D004AC6EA /* Gem.m */; };
 		0DA9CCE8149763B3004AC6EA /* GameBoard.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA9CCE7149763B3004AC6EA /* GameBoard.m */; };
-		0DA9CCF31497C2BC004AC6EA /* MainMenuScene.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0DA9CCF21497C2BC004AC6EA /* MainMenuScene.mm */; };
+		0DA9CCF31497C2BC004AC6EA /* MainMenuScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA9CCF21497C2BC004AC6EA /* MainMenuScene.m */; };
 		0DA9CCF61497C2D6004AC6EA /* ClassicGameScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA9CCF51497C2D6004AC6EA /* ClassicGameScene.m */; };
 		0DA9CCF91498C75D004AC6EA /* OptionsScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA9CCF81498C75C004AC6EA /* OptionsScene.m */; };
 		0DA9CCFC1498C76E004AC6EA /* HighscoresScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA9CCFB1498C76E004AC6EA /* HighscoresScene.m */; };
@@ -265,7 +265,7 @@
 		0DA9CCE6149763B3004AC6EA /* GameBoard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GameBoard.h; path = Classes/GameBoard.h; sourceTree = "<group>"; };
 		0DA9CCE7149763B3004AC6EA /* GameBoard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GameBoard.m; path = Classes/GameBoard.m; sourceTree = "<group>"; };
 		0DA9CCF11497C2BC004AC6EA /* MainMenuScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MainMenuScene.h; path = Classes/MainMenuScene.h; sourceTree = "<group>"; };
-		0DA9CCF21497C2BC004AC6EA /* MainMenuScene.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = MainMenuScene.mm; path = Classes/MainMenuScene.mm; sourceTree = "<group>"; };
+		0DA9CCF21497C2BC004AC6EA /* MainMenuScene.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MainMenuScene.m; path = Classes/MainMenuScene.m; sourceTree = "<group>"; };
 		0DA9CCF41497C2D6004AC6EA /* ClassicGameScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClassicGameScene.h; path = Classes/ClassicGameScene.h; sourceTree = "<group>"; };
 		0DA9CCF51497C2D6004AC6EA /* ClassicGameScene.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ClassicGameScene.m; path = Classes/ClassicGameScene.m; sourceTree = "<group>"; };
 		0DA9CCF71498C75C004AC6EA /* OptionsScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionsScene.h; path = Classes/OptionsScene.h; sourceTree = "<group>"; };
@@ -716,7 +716,7 @@
 			isa = PBXGroup;
 			children = (
 				0DA9CCF11497C2BC004AC6EA /* MainMenuScene.h */,
-				0DA9CCF21497C2BC004AC6EA /* MainMenuScene.mm */,
+				0DA9CCF21497C2BC004AC6EA /* MainMenuScene.m */,
 				0DA9CCF41497C2D6004AC6EA /* ClassicGameScene.h */,
 				0DA9CCF51497C2D6004AC6EA /* ClassicGameScene.m */,
 				0DA9CCF71498C75C004AC6EA /* OptionsScene.h */,
@@ -1075,7 +1075,7 @@
 				0DA5D41514939225003D7678 /* RootViewController.m in Sources */,
 				0DA9CCE51497603D004AC6EA /* Gem.m in Sources */,
 				0DA9CCE8149763B3004AC6EA /* GameBoard.m in Sources */,
-				0DA9CCF31497C2BC004AC6EA /* MainMenuScene.mm in Sources */,
+				0DA9CCF31497C2BC004AC6EA /* MainMenuScene.m in Sources */,
 				0DA9CCF61497C2D6004AC6EA /* ClassicGameScene.m in Sources */,
 				0DA9CCF91498C75D004AC6EA /* OptionsScene.m in Sources */,
 				0DA9CCFC1498C76E004AC6EA /* HighscoresScene.m in Sources */,
