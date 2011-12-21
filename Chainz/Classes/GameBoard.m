@@ -18,6 +18,12 @@ const NSInteger 	kGameboardNumberOfRows	= 8;
 const NSInteger 	kGameboardNumberOfCols	= 8;
 const CGSize		kGameboardCellSize		= {40.0, 40.0};
 
+const CGFloat		kSwapAnimationDuration				= 0.4;
+const CGFloat		kClearGemAnimationDuration			= 0.4;
+const CGFloat		kDropNewGemAnimationDuration		= 0.4;
+const CGFloat		kDropDanglingGemAnimationDuration	= 0.3;
+const CGFloat		kClearChainAnimationDelay			= 0.41;
+
 #define GET_COLOR(_point_) _board[(NSInteger)_point_.x][(NSInteger)_point_.y]
 #define GET_COLORXY(_x_, _y_) _board[(NSInteger)_x_][(NSInteger)_y_]
 #define SET_COLOR(_point_, _color_) do {_board[(NSInteger)_point_.x][(NSInteger)_point_.y] = _color_;} while(0)
@@ -245,12 +251,12 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	NSArray *point1Chain = [self _findAllChainsFromPoint:point1];
 	NSArray *point2Chain = [self _findAllChainsFromPoint:point2];
 
-	id swapGem1Action = [CCMoveTo actionWithDuration:0.4 position:gem2.position];
-	id swapGem2Action = [CCMoveTo actionWithDuration:0.4 position:gem1.position];
+	id swapGem1Action = [CCMoveTo actionWithDuration:kSwapAnimationDuration position:gem2.position];
+	id swapGem2Action = [CCMoveTo actionWithDuration:kSwapAnimationDuration position:gem1.position];
 	
 	if([point1Chain count] + [point2Chain count] == 0) {
-		id swapGem1ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem1.position];
-		id swapGem2ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem2.position];
+		id swapGem1ReverseAction = [CCMoveTo actionWithDuration:kSwapAnimationDuration position:gem1.position];
+		id swapGem2ReverseAction = [CCMoveTo actionWithDuration:kSwapAnimationDuration position:gem2.position];
 
 //		CC_SWAP(_board[(NSInteger)point1.x][(NSInteger)point1.y], _board[(NSInteger)point2.x][(NSInteger)point2.y]);
 		CC_SWAP(GET_COLOR(point1), GET_COLOR(point2));
@@ -267,7 +273,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		[gem1 runAction:swapGem1Action];
 		[gem2 runAction:swapGem2Action];
 
-		double delayInSeconds = 0.41;
+		double delayInSeconds = kClearChainAnimationDelay;
 		dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
 		dispatch_after(popTime, dispatch_get_main_queue(), ^(void) {
 			[self clearChain:point1 sequence:point1Chain];
@@ -354,7 +360,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		gem.position = srcSpritePosition;
 		
 		[self addChild:gem];
-		[gem runAction:[CCMoveTo actionWithDuration:0.4 position:dstSpritePosition]];
+		[gem runAction:[CCMoveTo actionWithDuration:kDropNewGemAnimationDuration position:dstSpritePosition]];
 		
 		[_gems replaceObjectAtIndex:GemIndexForBoardPosition(boardPos) withObject:gem];
 		[gem release];
@@ -470,7 +476,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 				id gem = [_gems objectAtIndex:newIndex];
 				if([gem isKindOfClass:[Gem class]]) {
 					[(Gem *)gem setPoint:newPos];
-					CCMoveBy *action = [CCMoveTo actionWithDuration:0.3 position:CoordinatesForGemAtPosition(newPos)];
+					CCMoveBy *action = [CCMoveTo actionWithDuration:kDropDanglingGemAnimationDuration position:CoordinatesForGemAtPosition(newPos)];
 					[(Gem *)gem runAction:action];
 				}
 			}
