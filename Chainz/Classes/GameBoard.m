@@ -287,29 +287,6 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// todo: add proper delays between relevant calls
-// we need animations to flow smoothly (clearing chains, dropping dangling gems, dropping replacement gems, etc.)
-// after swapping gems and clearing the produced chains and dropping dangling gems
-// we also need to check whether new chains were formed as a result and clear them too0
-////////////////////////////////////////////////////////////////////////////////
-- (void)_findAndClearAllComboChains
-{
-	BOOL done = NO;
-	while(!done) {
-		NSDictionary *comboChains = [self _findAllChains];
-		if([comboChains count] == 0) {
-			done = YES;
-			break;
-		}
-		for(NSString *pointStr in [comboChains allKeys]) {
-			[self clearChain:CGPointFromString(pointStr) sequence:[comboChains objectForKey:pointStr]];
-		}
-		[self _dropDanglingGems];
-		[self _generateAndDropDownGemsForClearedChains];
-	}
-}
-
-////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 - (BOOL)moveGemAtPoint:(CGPoint)point withDirection:(GameboardMovementDirection)direction
 {
@@ -341,56 +318,6 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 
 	[self swapGemAtPoint:point withGemAtPoint:destPoint];
 	return YES;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Iterates the whole board and generates new gems for all cells marked as cleared (GemColorClear)
-// Schedules the drop down animation of all generated gems
-////////////////////////////////////////////////////////////////////////////////
-- (void)_generateAndDropDownGemsForClearedChains
-{
-	NSMutableArray *generatedGems = [self _generateGemsForClearedCells];
-	for(NSString *pointStr in generatedGems) {
-		// Create the actual gem sprite, add it outside the gameboard and schedule
-		// a drop animation action to the destination point
-		CGPoint boardPos = CGPointFromString(pointStr);
-		Gem *gem = [[Gem alloc] initWithGameboard:self position:boardPos kind:GemKindNormal color:GET_COLOR(boardPos)];
-		CGPoint dstSpritePosition = CoordinatesForGemAtPosition(gem.point);
-		CGPoint srcSpritePosition = {dstSpritePosition.x, kGameboardNumberOfRows*kGameboardCellSize.height+kGameboardCellSize.height};
-		gem.position = srcSpritePosition;
-		
-		[self addChild:gem];
-		[gem runAction:[CCMoveTo actionWithDuration:kDropNewGemAnimationDuration position:dstSpritePosition]];
-		
-		[_gems replaceObjectAtIndex:GemIndexForBoardPosition(boardPos) withObject:gem];
-		[gem release];
-	}
-	[self printBoard];
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Iterates the whole board and generates new gems for all cells marked as cleared (GemColorClear)
-// Returns the list of all positions where new gems have been generated
-// consider renaming to _generateGemsOnEmptySpaces || _generateGemsForEmptySpaces
-////////////////////////////////////////////////////////////////////////////////
-- (NSMutableArray *)_generateGemsForClearedCells
-{
-	NSMutableArray *generatedGems = [[NSMutableArray alloc] init];
-	
-	NSInteger x, y;
-	for(x = GAMEBOARD_NUM_COLS-1; x >= 0; x--) {
-		for(y = GAMEBOARD_NUM_ROWS; y >= 0; y--) {
-//			if(_board[x][y] == GemColorClear) {
-//				_board[x][y] = arc4random()%GemColorCount;
-//				[generatedGems addObject:NSStringFromCGPoint((CGPoint){x,y})];
-//			}
-			if(GET_COLORXY(x, y) == GemColorClear) {
-				SET_COLORXY(x, y, RAND_COLOR());
-				[generatedGems addObject:NSStringFromCGPoint((CGPoint){x,y})];
-			}
-		}
-	}
-	return [generatedGems autorelease];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -435,54 +362,6 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 			}
 		}
 	}
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Shifts down all gems that are above cleared chains
-// Also schedules the drop down animation
-// NOTE: should we just returns the list of position updates so we can deliver them to an animator later?
-////////////////////////////////////////////////////////////////////////////////
-- (void)_dropDanglingGems
-{
-	NSInteger x, y;
-	[self printBoard];
-	for(x = GAMEBOARD_NUM_COLS-1; x >= 0; x--) {
-		for(y = GAMEBOARD_NUM_ROWS-1; y >= 0; y--) {
-			if(_board[x][y] != GemColorClear) continue;
-			NSInteger py = y-1;
-//			while(py >= 0 && _board[x][py] == GemColorClear) {
-//				py--;
-//			}
-			while(py >= 0 && GET_COLORXY(x, py) == GemColorClear) {
-				py--;
-			}
-	
-			if(py >= 0) {
-//				_board[x][y] = _board[x][py];
-//				_board[x][py] = GemColorClear;
-				SET_COLORXY(x, y, GET_COLORXY(x, py));
-				SET_COLORXY(x, py, GemColorClear);
-
-				// schedule the drop down animation here
-				// or
-				// save the position update (src => destination) and return the list
-				CGPoint oldPos = {x, py};
-				CGPoint newPos = {x, y};
-				
-				NSInteger oldIndex = GemIndexForBoardPosition(oldPos);
-				NSInteger newIndex = GemIndexForBoardPosition(newPos);
-				
-				[_gems exchangeObjectAtIndex:oldIndex withObjectAtIndex:newIndex];
-				id gem = [_gems objectAtIndex:newIndex];
-				if([gem isKindOfClass:[Gem class]]) {
-					[(Gem *)gem setPoint:newPos];
-					CCMoveBy *action = [CCMoveTo actionWithDuration:kDropDanglingGemAnimationDuration position:CoordinatesForGemAtPosition(newPos)];
-					[(Gem *)gem runAction:action];
-				}
-			}
-		}
-	}
-	// schedule the drop animations for every gem we actually moved down
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -759,6 +638,29 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// todo: add proper delays between relevant calls
+// we need animations to flow smoothly (clearing chains, dropping dangling gems, dropping replacement gems, etc.)
+// after swapping gems and clearing the produced chains and dropping dangling gems
+// we also need to check whether new chains were formed as a result and clear them too0
+////////////////////////////////////////////////////////////////////////////////
+- (void)_findAndClearAllComboChains
+{
+	BOOL done = NO;
+	while(!done) {
+		NSDictionary *comboChains = [self _findAllChains];
+		if([comboChains count] == 0) {
+			done = YES;
+			break;
+		}
+		for(NSString *pointStr in [comboChains allKeys]) {
+			[self clearChain:CGPointFromString(pointStr) sequence:[comboChains objectForKey:pointStr]];
+		}
+		[self _dropDanglingGems];
+		[self _generateAndDropDownGemsForClearedChains];
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Inspects the whole board and returns a collection of all valid moves:
 // [point] => [list of all valid adjacent swaps]
 // NOTE: consider turning this in an updateAllValidMoves method and cache the results
@@ -833,6 +735,104 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	CC_SWAP(GET_COLOR(p2), GET_COLOR(p1));
 	
 	return ([p1Chain count] + [p2Chain count] > 0);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Iterates the whole board and generates new gems for all cells marked as cleared (GemColorClear)
+// Schedules the drop down animation of all generated gems
+////////////////////////////////////////////////////////////////////////////////
+- (void)_generateAndDropDownGemsForClearedChains
+{
+	NSMutableArray *generatedGems = [self _generateGemsForClearedCells];
+	for(NSString *pointStr in generatedGems) {
+		// Create the actual gem sprite, add it outside the gameboard and schedule
+		// a drop animation action to the destination point
+		CGPoint boardPos = CGPointFromString(pointStr);
+		Gem *gem = [[Gem alloc] initWithGameboard:self position:boardPos kind:GemKindNormal color:GET_COLOR(boardPos)];
+		CGPoint dstSpritePosition = CoordinatesForGemAtPosition(gem.point);
+		CGPoint srcSpritePosition = {dstSpritePosition.x, kGameboardNumberOfRows*kGameboardCellSize.height+kGameboardCellSize.height};
+		gem.position = srcSpritePosition;
+		
+		[self addChild:gem];
+		[gem runAction:[CCMoveTo actionWithDuration:kDropNewGemAnimationDuration position:dstSpritePosition]];
+		
+		[_gems replaceObjectAtIndex:GemIndexForBoardPosition(boardPos) withObject:gem];
+		[gem release];
+	}
+	[self printBoard];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Iterates the whole board and generates new gems for all cells marked as cleared (GemColorClear)
+// Returns the list of all positions where new gems have been generated
+// consider renaming to _generateGemsOnEmptySpaces || _generateGemsForEmptySpaces
+////////////////////////////////////////////////////////////////////////////////
+- (NSMutableArray *)_generateGemsForClearedCells
+{
+	NSMutableArray *generatedGems = [[NSMutableArray alloc] init];
+	
+	NSInteger x, y;
+	for(x = GAMEBOARD_NUM_COLS-1; x >= 0; x--) {
+		for(y = GAMEBOARD_NUM_ROWS; y >= 0; y--) {
+			//			if(_board[x][y] == GemColorClear) {
+			//				_board[x][y] = arc4random()%GemColorCount;
+			//				[generatedGems addObject:NSStringFromCGPoint((CGPoint){x,y})];
+			//			}
+			if(GET_COLORXY(x, y) == GemColorClear) {
+				SET_COLORXY(x, y, RAND_COLOR());
+				[generatedGems addObject:NSStringFromCGPoint((CGPoint){x,y})];
+			}
+		}
+	}
+	return [generatedGems autorelease];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Shifts down all gems that are above cleared chains
+// Also schedules the drop down animation
+// NOTE: should we just returns the list of position updates so we can deliver them to an animator later?
+////////////////////////////////////////////////////////////////////////////////
+- (void)_dropDanglingGems
+{
+	NSInteger x, y;
+	[self printBoard];
+	for(x = GAMEBOARD_NUM_COLS-1; x >= 0; x--) {
+		for(y = GAMEBOARD_NUM_ROWS-1; y >= 0; y--) {
+			if(_board[x][y] != GemColorClear) continue;
+			NSInteger py = y-1;
+			//			while(py >= 0 && _board[x][py] == GemColorClear) {
+			//				py--;
+			//			}
+			while(py >= 0 && GET_COLORXY(x, py) == GemColorClear) {
+				py--;
+			}
+			
+			if(py >= 0) {
+				//				_board[x][y] = _board[x][py];
+				//				_board[x][py] = GemColorClear;
+				SET_COLORXY(x, y, GET_COLORXY(x, py));
+				SET_COLORXY(x, py, GemColorClear);
+				
+				// schedule the drop down animation here
+				// or
+				// save the position update (src => destination) and return the list
+				CGPoint oldPos = {x, py};
+				CGPoint newPos = {x, y};
+				
+				NSInteger oldIndex = GemIndexForBoardPosition(oldPos);
+				NSInteger newIndex = GemIndexForBoardPosition(newPos);
+				
+				[_gems exchangeObjectAtIndex:oldIndex withObjectAtIndex:newIndex];
+				id gem = [_gems objectAtIndex:newIndex];
+				if([gem isKindOfClass:[Gem class]]) {
+					[(Gem *)gem setPoint:newPos];
+					CCMoveBy *action = [CCMoveTo actionWithDuration:kDropDanglingGemAnimationDuration position:CoordinatesForGemAtPosition(newPos)];
+					[(Gem *)gem runAction:action];
+				}
+			}
+		}
+	}
+	// schedule the drop animations for every gem we actually moved down
 }
 
 ////////////////////////////////////////////////////////////////////////////////
