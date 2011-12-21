@@ -826,7 +826,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 				id gem = [_gems objectAtIndex:newIndex];
 				if([gem isKindOfClass:[Gem class]]) {
 					[(Gem *)gem setPoint:newPos];
-					CCMoveBy *action = [CCMoveTo actionWithDuration:kDropDanglingGemAnimationDuration position:CoordinatesForGemAtPosition(newPos)];
+					CCMoveTo *action = [CCMoveTo actionWithDuration:kDropDanglingGemAnimationDuration position:CoordinatesForGemAtPosition(newPos)];
 					[(Gem *)gem runAction:action];
 				}
 			}

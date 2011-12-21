@@ -17,6 +17,12 @@
 - (ccColor4F)_randomBrightColor;
 - (CCSprite *)_backgroundSpriteWithColor1:(ccColor4F)color1 color2:(ccColor4F)color2 textureSize:(float)textureSize cols:(int)numCols rows:(int)numRows;
 
+- (void)_renderHorizontalStripes:(float)textureSize color:(ccColor4F)color stripes:(int)stripes;
+- (void)_renderVerticalStripes:(float)textureSize color:(ccColor4F)color stripes:(int)stripes;
+- (void)_renderGradient:(float)textureSize;
+- (void)_renderHighlight:(float)textureSize;
+- (void)_renderNoise:(float)textureSize;
+
 @end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -120,7 +126,7 @@
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
 	
-	// Render horizontal stripes
+	// Render diagonal stripes
 	CGPoint vertices[numRows * 6];
 	float x1 = -textureSize;
 	float x2;
@@ -145,7 +151,11 @@
     glVertexPointer(2, GL_FLOAT, 0, vertices);
     glDrawArrays(GL_TRIANGLES, 0, (GLsizei)numVertices);
 	
-	// Render vertical stripes
+	// Render stripes
+//	[self _renderHorizontalStripes:textureSize color:color2 stripes:numRows];
+//	[self _renderVerticalStripes:textureSize color:color2 stripes:numCols];
+//	[self _renderGradient:textureSize];
+//	[self _renderHighlight:textureSize];
 	
 	// Render gradient here
 	glEnableClientState(GL_COLOR_ARRAY);
@@ -200,6 +210,158 @@
 	[textureRenderer end];
 	
 	return [CCSprite spriteWithTexture:textureRenderer.sprite.texture];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)_renderDiagonalStripes:(float)textureSize color:(ccColor4F)color stripes:(int)stripes
+{
+	CGPoint vertices[stripes * 6];
+	float x1 = -textureSize;
+	float x2;
+	float y1 = textureSize;
+	float y2 = 0;
+	float dx = textureSize / stripes * 2;
+    float stripeWidth = dx/2;
+	
+	int numVertices = 0;
+    for(int i = 0; i < stripes; i++) {
+        x2 = x1 + textureSize;
+        vertices[numVertices++] = CGPointMake(x1, y1);
+        vertices[numVertices++] = CGPointMake(x1+stripeWidth, y1);
+        vertices[numVertices++] = CGPointMake(x2, y2);
+		vertices[numVertices++] = vertices[numVertices-2];
+        vertices[numVertices++] = CGPointMake(x2+stripeWidth, y2);
+        vertices[numVertices++] = vertices[numVertices-5];
+        x1 += dx;
+    }
+    
+    glColor4f(color.r, color.g, color.b, color.a);
+    glVertexPointer(2, GL_FLOAT, 0, vertices);
+    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)numVertices);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)_renderHorizontalStripes:(float)textureSize color:(ccColor4F)color stripes:(int)stripes
+{
+	CGPoint vertices[stripes * 6];
+	float stripeWidth = (textureSize/stripes)/2;
+	float x1 = 0;
+	float y1 = stripeWidth;
+	float x2 = textureSize;
+	float y2 = stripeWidth*2;
+	
+	int vertex = 0;
+	for(int i = 0; i < stripes; i++) {
+		// Triangle 0
+		vertices[vertex] = CGPointMake(x1, y1); vertex++; // v0
+		vertices[vertex] = CGPointMake(x1, y2); vertex++; // v1
+		vertices[vertex] = CGPointMake(x2, y1); vertex++; // v2
+		
+		// Triangle 1
+		vertices[vertex] = vertices[vertex-1];  vertex++; // v3 = v2
+		vertices[vertex] = CGPointMake(x2, y2); vertex++; // v4
+		vertices[vertex] = vertices[vertex-4]; vertex++;  // v5 = v1
+		
+		y1 += stripeWidth*2;
+		y2 += stripeWidth*2;
+	}
+	
+	glColor4f(color.r, color.g, color.b, color.a);
+	glVertexPointer(2, GL_FLOAT, 0, vertices);
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertex);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)_renderVerticalStripes:(float)textureSize color:(ccColor4F)color stripes:(int)stripes
+{
+	CGPoint vertices[stripes * 6];
+	float stripeWidth = (textureSize/stripes)/2;
+	float x1 = stripeWidth;
+	float x2 = stripeWidth*2;
+	float y1 = 0;
+	float y2 = textureSize;
+	
+	int vertex = 0;
+	for(int i = 0; i < stripes; i++) {
+		// Triangle 0
+		vertices[vertex] = CGPointMake(x1, y1); vertex++; // v0
+		vertices[vertex] = CGPointMake(x1, y2); vertex++; // v1
+		vertices[vertex] = CGPointMake(x2, y1); vertex++; // v2
+		
+		// Triangle 1
+		vertices[vertex] = vertices[vertex-1]; vertex++;  // v3 = v2
+		vertices[vertex] = CGPointMake(x2, y2); vertex++; // v4
+		vertices[vertex] = vertices[vertex-4]; vertex++;  // v5 = v1
+		
+		x1 += stripeWidth*2;
+		x2 += stripeWidth*2;
+	}
+	
+	glColor4f(color.r, color.g, color.b, color.a);
+	glVertexPointer(2, GL_FLOAT, 0, vertices);
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertex);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)_renderGradient:(float)textureSize
+{
+	CGPoint vertices[6];
+	float gradientAlpha = 0.7;
+	ccColor4F colors[4];
+	int vertex = 0;
+	
+	vertices[vertex] = CGPointMake(0, 0);
+	colors[vertex++] = (ccColor4F){0, 0, 0, 0};
+	vertices[vertex] = CGPointMake(textureSize, 0);
+	colors[vertex++] = (ccColor4F){0, 0, 0, 0};
+	vertices[vertex] = CGPointMake(0, textureSize);
+	colors[vertex++] = (ccColor4F){0, 0, 0, gradientAlpha};
+	vertices[vertex] = CGPointMake(textureSize, textureSize);
+	colors[vertex++] = (ccColor4F){0, 0, 0, gradientAlpha};
+	
+	glVertexPointer(2, GL_FLOAT, 0, vertices);
+	glColorPointer(4, GL_FLOAT, 0, colors);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, (GLsizei)vertex);	
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)_renderHighlight:(float)textureSize
+{
+	CGPoint vertices[6];
+	float borderWidth = textureSize/16;
+	float borderAlpha = 0.3;
+	ccColor4F colors[4];
+	int vertex = 0;
+	
+	vertices[vertex] = CGPointMake(0, 0);
+	colors[vertex++] = (ccColor4F){1, 1, 1, borderAlpha};
+	vertices[vertex] = CGPointMake(textureSize, 0);
+	colors[vertex++] = (ccColor4F){1, 1, 1, borderAlpha};
+	
+	vertices[vertex] = CGPointMake(0, borderWidth);
+	colors[vertex++] = (ccColor4F){0, 0, 0, 0};
+	vertices[vertex] = CGPointMake(textureSize, borderWidth);
+	colors[vertex++] = (ccColor4F){0, 0, 0, 0};
+	
+	glVertexPointer(2, GL_FLOAT, 0, vertices);
+	glColorPointer(4, GL_FLOAT, 0, colors);
+	glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, (GLsizei)vertex);	
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)_renderNoise:(float)textureSize
+{
+    CCSprite *noise = [CCSprite spriteWithFile:@"noise.png"];
+    [noise setBlendFunc:(ccBlendFunc){GL_DST_COLOR, GL_ZERO}];
+    noise.position = ccp(textureSize/2, textureSize/2);
+    [noise visit];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
