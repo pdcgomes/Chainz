@@ -24,17 +24,10 @@ const CGSize		kGameboardCellSize		= {40.0, 40.0};
 #define SET_COLOR(_point_, _color_) do {_board[(NSInteger)_point_.x][(NSInteger)_point_.y] = _color_;} while(0)
 #define SET_COLORXY(_x_, _y_, _color_) do {_board[(NSInteger)_x_][(NSInteger)_y_] = _color_;} while(0)
 
-////////////////////////////////////////////////////////////////////////////////
-// Helper functions
-////////////////////////////////////////////////////////////////////////////////
-static void swap(NSInteger *a, NSInteger *b)
-{
-	NSInteger tmp = *a;
-	*a = *b;
-	*b = tmp;
-}
+#define RAND_COLOR() (arc4random()%GemColorCount)
 
 ////////////////////////////////////////////////////////////////////////////////
+// Helper functions
 ////////////////////////////////////////////////////////////////////////////////
 static NSInteger GemIndexForBoardPosition(CGPoint p) 
 {
@@ -176,7 +169,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 			for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
 //				_board[x][y] = arc4random()%GemColorCount;
-				SET_COLORXY(x, y, arc4random()%GemColorCount);
+				SET_COLORXY(x, y, RAND_COLOR());
 			}
 		}
 	
@@ -373,7 +366,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 //				[generatedGems addObject:NSStringFromCGPoint((CGPoint){x,y})];
 //			}
 			if(GET_COLORXY(x, y) == GemColorClear) {
-				SET_COLORXY(x, y, arc4random()%GemColorCount);
+				SET_COLORXY(x, y, RAND_COLOR());
 				[generatedGems addObject:NSStringFromCGPoint((CGPoint){x,y})];
 			}
 		}
@@ -419,7 +412,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 //				_board[x][y] = arc4random()%GemColorCount;
 //			}
 			if(GET_COLORXY(x, y) == GemColorClear) {
-				SET_COLORXY(x, y, arc4random()%GemColorCount);
+				SET_COLORXY(x, y, RAND_COLOR());
 			}
 		}
 	}
