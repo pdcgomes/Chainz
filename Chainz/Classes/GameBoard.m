@@ -8,7 +8,6 @@
 
 #import "GameBoard.h"
 #import "Gem.h"
-#import "CCDrawingPrimitives.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Constants and definitions
@@ -74,6 +73,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 - (NSArray *)_findAllChainsForSequence:(NSArray *)sequence;
 - (NSArray *)_findAllChainsFromPoint:(CGPoint)point;
 - (NSMutableDictionary *)_findAllChains;
+- (void)_findAndClearAllComboChains;
 
 - (void)_dropDanglingGems;
 - (void)_generateAndDropDownGemsForClearedChains;
@@ -275,18 +275,31 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 			[self _dropDanglingGems];
 			[self _generateAndDropDownGemsForClearedChains];
 			
-//			BOOL done = NO;
-//			while(!done) {
-//				NSDictionary *comboChains = [self _findAllChains];
-//				if([comboChains count] == 0) break;
-//				
-//				for(NSString *pointStr in [comboChains allKeys]) {
-//					[self clearChain:CGPointFromString(pointStr) sequence:[comboChains objectForKey:pointStr]];
-//				}
-//				[self _dropDanglingGems];
-//			}
-//			[self _generateAndDropDownGemsForClearedChains];
+			[self _findAndClearAllComboChains];
 		});
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// todo: add proper delays between relevant calls
+// we need animations to flow smoothly (clearing chains, dropping dangling gems, dropping replacement gems, etc.)
+// after swapping gems and clearing the produced chains and dropping dangling gems
+// we also need to check whether new chains were formed as a result and clear them too0
+////////////////////////////////////////////////////////////////////////////////
+- (void)_findAndClearAllComboChains
+{
+	BOOL done = NO;
+	while(!done) {
+		NSDictionary *comboChains = [self _findAllChains];
+		if([comboChains count] == 0) {
+			done = YES;
+			break;
+		}
+		for(NSString *pointStr in [comboChains allKeys]) {
+			[self clearChain:CGPointFromString(pointStr) sequence:[comboChains objectForKey:pointStr]];
+		}
+		[self _dropDanglingGems];
+		[self _generateAndDropDownGemsForClearedChains];
 	}
 }
 
