@@ -161,6 +161,9 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	// if it has, clear them, generate new gems and start over 
 	// We also need to figure out if the current board is solvable
 	// If not, generate a new one(?)
+	// the current algorithm is a simple brute force approach
+	// in the future, tweak it so we can actually define the number solutions 
+	// for the initial state
 	BOOL boardReady = NO;
 	while(!boardReady) {
 		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -350,6 +353,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 // Iterates the whole board and generates new gems for all cells marked as cleared (-1)
 // Returns the list of all positions where new gems have been generated
+// consider renaming to _generateGemsOnEmptySpaces || _generateGemsForEmptySpaces
 ////////////////////////////////////////////////////////////////////////////////
 - (NSMutableArray *)_generateGemsForClearedCells
 {
@@ -370,6 +374,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 // Clears (marks) all gems in a given chain
 ////////////////////////////////////////////////////////////////////////////////
+#define IsKindOfClass(_obj_, _class_) ([_obj_ isKindOfClass:[_class_ class]])
 - (void)clearChain:(CGPoint)point sequence:(NSArray *)sequence
 {
 	//	NSInteger x, y;
@@ -378,9 +383,12 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		_board[(NSInteger)p.x][(NSInteger)p.y] = -1;
 		
 		NSInteger gemIndex = GemIndexForBoardPosition(p);
-		Gem *gem = [_gems objectAtIndex:gemIndex];
-		[gem removeFromParentAndCleanup:YES];
-		[_gems replaceObjectAtIndex:gemIndex withObject:[NSNull null]];
+		if([[_gems objectAtIndex:gemIndex] isKindOfClass:[Gem class]]) { // when clearing multiple intersecting chains, intersecting gems may have been cleared already
+//			Gem *gem = [_gems objectAtIndex:gemIndex];
+//			[gem removeFromParentAndCleanup:YES];
+			[[_gems objectAtIndex:gemIndex] removeFromParentAndCleanup:YES];
+			[_gems replaceObjectAtIndex:gemIndex withObject:[NSNull null]];
+		}
 	}
 	[self visit];
 	// schedule the clear animation
