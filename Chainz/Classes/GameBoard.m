@@ -21,8 +21,8 @@ const CGSize		kGameboardCellSize		= {40.0, 40.0};
 
 #define GET_COLOR(_point_) _board[(NSInteger)_point_.x][(NSInteger)_point_.y]
 #define GET_COLORXY(_x_, _y_) _board[(NSInteger)_x_][(NSInteger)_y_]
-#define SET_COLOR(_color_, _point_) do {_board[(NSInteger)_point_.x][(NSInteger)_point_.y] = _color_;} while(0)
-#define SET_COLORXY(_color_, _x_, _y_) do {_board[(NSInteger)_x_][(NSInteger)_y_] = _color_;} while(0)
+#define SET_COLOR(_point_, _color_) do {_board[(NSInteger)_point_.x][(NSInteger)_point_.y] = _color_;} while(0)
+#define SET_COLORXY(_x_, _y_, _color_) do {_board[(NSInteger)_x_][(NSInteger)_y_] = _color_;} while(0)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helper functions
@@ -175,7 +175,8 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		
 		for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 			for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
-				_board[x][y] = arc4random()%GemColorCount;
+//				_board[x][y] = arc4random()%GemColorCount;
+				SET_COLORXY(x, y, arc4random()%GemColorCount);
 			}
 		}
 	
@@ -206,8 +207,9 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	
 	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
-			Gem *gem = [[Gem alloc] initWithGameboard:self position:(CGPoint){x,y} kind:GemKindNormal color:_board[x][y]];
+//			Gem *gem = [[Gem alloc] initWithGameboard:self position:(CGPoint){x,y} kind:GemKindNormal color:_board[x][y]];
 //			gem.anchorPoint = CGPointZero;
+			Gem *gem = [[Gem alloc] initWithGameboard:self position:(CGPoint){x,y} kind:GemKindNormal color:GET_COLORXY(x, y)];
 			gem.position = CoordinatesForGemAtPosition((CGPoint){x,y});
 			
 //			CCLOG(@"%@ = %@, c = %d", NSStringFromCGPoint(gem.point), NSStringFromCGPoint(gem.position), gem.gemColor);
@@ -366,8 +368,12 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	NSInteger x, y;
 	for(x = GAMEBOARD_NUM_COLS-1; x >= 0; x--) {
 		for(y = GAMEBOARD_NUM_ROWS; y >= 0; y--) {
-			if(_board[x][y] == GemColorClear) {
-				_board[x][y] = arc4random()%GemColorCount;
+//			if(_board[x][y] == GemColorClear) {
+//				_board[x][y] = arc4random()%GemColorCount;
+//				[generatedGems addObject:NSStringFromCGPoint((CGPoint){x,y})];
+//			}
+			if(GET_COLORXY(x, y) == GemColorClear) {
+				SET_COLORXY(x, y, arc4random()%GemColorCount);
 				[generatedGems addObject:NSStringFromCGPoint((CGPoint){x,y})];
 			}
 		}
@@ -385,7 +391,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	for(NSString *pointStr in sequence) {
 		CGPoint p = CGPointFromString(pointStr);
 //		_board[(NSInteger)p.x][(NSInteger)p.y] = -1;
-		SET_COLOR(GemColorClear, point);
+		SET_COLOR(point, GemColorClear);
 		
 		NSInteger gemIndex = GemIndexForBoardPosition(p);
 		if([[_gems objectAtIndex:gemIndex] isKindOfClass:[Gem class]]) { // when clearing multiple intersecting chains, intersecting gems may have been cleared already
@@ -409,8 +415,11 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	NSInteger x, y;
 	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
-			if(_board[x][y] == GemColorClear) {
-				_board[x][y] = arc4random()%GemColorCount;
+//			if(_board[x][y] == GemColorClear) {
+//				_board[x][y] = arc4random()%GemColorCount;
+//			}
+			if(GET_COLORXY(x, y) == GemColorClear) {
+				SET_COLORXY(x, y, arc4random()%GemColorCount);
 			}
 		}
 	}
@@ -429,12 +438,19 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		for(y = GAMEBOARD_NUM_ROWS-1; y >= 0; y--) {
 			if(_board[x][y] != GemColorClear) continue;
 			NSInteger py = y-1;
-			while(py >= 0 && _board[x][py] == GemColorClear) {
+//			while(py >= 0 && _board[x][py] == GemColorClear) {
+//				py--;
+//			}
+			while(py >= 0 && GET_COLORXY(x, py) == GemColorClear) {
 				py--;
 			}
+	
 			if(py >= 0) {
-				_board[x][y] = _board[x][py];
-				_board[x][py] = GemColorClear;
+//				_board[x][y] = _board[x][py];
+//				_board[x][py] = GemColorClear;
+				SET_COLORXY(x, y, GET_COLORXY(x, py));
+				SET_COLORXY(x, py, GemColorClear);
+
 				// schedule the drop down animation here
 				// or
 				// save the position update (src => destination) and return the list
@@ -497,7 +513,8 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	NSMutableString	*matrixStr = [[NSMutableString alloc] initWithString:@"\n"];
 	for(y = 0; y < GAMEBOARD_NUM_COLS; y++) {
 		for(x = 0; x < GAMEBOARD_NUM_ROWS; x++) {
-			[matrixStr appendFormat:@"[%2d] ", _board[x][y]];
+//			[matrixStr appendFormat:@"[%2d] ", _board[x][y]];
+			[matrixStr appendFormat:@"[%2d] ", GET_COLORXY(x, y)];
 		}
 		[matrixStr appendString:@"\n"];
 	}
@@ -542,30 +559,30 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 			[visitedNodes setObject:[NSNull null] forKey:nodeKey];
 		}
 		
-		if(_board[x][y] == color) {
+		if(GET_COLORXY(x, y) == color) {
 			[matches addObject:NSStringFromCGPoint(p)];
 		}
 		
 		NSInteger cursor = x-1;
-		if(cursor >= 0 && _board[cursor][y] == color) {
+		if(cursor >= 0 && GET_COLORXY(cursor, y) == color) {
 			[queue addObject:NSStringFromCGPoint((CGPoint){cursor, y})];
 			cursor--;
 		}
 		
 		cursor = x+1;
-		if(cursor < GAMEBOARD_NUM_ROWS && _board[cursor][y] == color) {
+		if(cursor < GAMEBOARD_NUM_ROWS && GET_COLORXY(cursor, y) == color) {
 			[queue addObject:NSStringFromCGPoint((CGPoint){cursor, y})];
 			cursor++;
 		}
 		
 		cursor = y-1;
-		if(cursor >= 0 && _board[x][cursor] == color) {
+		if(cursor >= 0 && GET_COLORXY(x, cursor) == color) {
 			[queue addObject:NSStringFromCGPoint((CGPoint){x, cursor})];
 			cursor--;
 		}
 		
 		cursor = y+1;
-		if(cursor < GAMEBOARD_NUM_COLS && _board[x][cursor] == color) {
+		if(cursor < GAMEBOARD_NUM_COLS && GET_COLORXY(x, cursor) == color) {
 			[queue addObject:NSStringFromCGPoint((CGPoint){x, cursor})];
 			cursor++;
 		}
@@ -677,7 +694,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 - (NSArray *)_findAllChainsFromPoint:(CGPoint)point
 {
-	NSArray *sequences = [self _floodFill:point color:_board[(NSInteger)point.x][(NSInteger)point.y]];
+	NSArray *sequences = [self _floodFill:point color:GET_COLOR(point)];
 	return [self _findAllChainsForSequence:sequences];
 }
 
@@ -717,7 +734,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	NSMutableDictionary *matchesByPos = [[NSMutableDictionary alloc] init];
 	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
-			NSArray *sequence = [self _floodFill:(CGPoint){x, y} color:_board[x][y]];
+			NSArray *sequence = [self _floodFill:(CGPoint){x, y} color:GET_COLORXY(x, y)];
 			if([sequence count] == 0) continue;
 
 			NSArray *chains = [self _findAllChainsForSequence:sequence];
@@ -787,17 +804,21 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	if(!gameboardContainsPoints) {
 		return NO;
 	}
-//	swap(&_board[(NSInteger)p1.x][(NSInteger)p1.y], &_board[(NSInteger)p2.x][(NSInteger)p2.y]);
-	CC_SWAP(_board[(NSInteger)p1.x][(NSInteger)p1.y], _board[(NSInteger)p2.x][(NSInteger)p2.y]);
 	
-	NSArray *p1Sequences = [self _floodFill:p1 color:_board[(NSInteger)p1.x][(NSInteger)p1.y]];
-	NSArray *p2Sequences = [self _floodFill:p2 color:_board[(NSInteger)p2.x][(NSInteger)p2.y]];	
+//	CC_SWAP(_board[(NSInteger)p1.x][(NSInteger)p1.y], _board[(NSInteger)p2.x][(NSInteger)p2.y]);
+	CC_SWAP(GET_COLOR(p1), GET_COLOR(p2));
 	
+//	NSArray *p1Sequences = [self _floodFill:p1 color:_board[(NSInteger)p1.x][(NSInteger)p1.y]];
+//	NSArray *p2Sequences = [self _floodFill:p2 color:_board[(NSInteger)p2.x][(NSInteger)p2.y]];	
+
+	NSArray *p1Sequences = [self _floodFill:p1 color:GET_COLOR(p1)];
+	NSArray *p2Sequences = [self _floodFill:p2 color:GET_COLOR(p2)];	
+
 	NSArray *p1Chain = [self _findAllChainsForSequence:p1Sequences];
 	NSArray *p2Chain = [self _findAllChainsForSequence:p2Sequences];
 
-//	swap(&_board[(NSInteger)p2.x][(NSInteger)p2.y], &_board[(NSInteger)p1.x][(NSInteger)p1.y]);
-	CC_SWAP(_board[(NSInteger)p2.x][(NSInteger)p2.y], _board[(NSInteger)p1.x][(NSInteger)p1.y]);
+//	CC_SWAP(_board[(NSInteger)p2.x][(NSInteger)p2.y], _board[(NSInteger)p1.x][(NSInteger)p1.y]);
+	CC_SWAP(GET_COLOR(p2), GET_COLOR(p1));
 	
 	return ([p1Chain count] + [p2Chain count] > 0);
 }
