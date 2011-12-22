@@ -18,11 +18,11 @@ const NSInteger 	kGameboardNumberOfRows	= 8;
 const NSInteger 	kGameboardNumberOfCols	= 8;
 const CGSize		kGameboardCellSize		= {40.0, 40.0};
 
-const CGFloat		kSwapAnimationDuration				= 0.4;
-const CGFloat		kClearGemAnimationDuration			= 0.4;
-const CGFloat		kDropNewGemAnimationDuration		= 0.4;
-const CGFloat		kDropDanglingGemAnimationDuration	= 0.3;
-const CGFloat		kClearChainAnimationDelay			= 0.41;
+const CGFloat       kSwapAnimationDuration              = 0.4;
+const CGFloat       kClearGemAnimationDuration          = 0.4;
+const CGFloat       kDropNewGemAnimationDuration        = 0.4;
+const CGFloat       kDropDanglingGemAnimationDuration	= 0.3;
+const CGFloat       kClearChainAnimationDelay           = 0.41;
 
 #define GET_COLOR(_point_) _board[(NSInteger)_point_.x][(NSInteger)_point_.y]
 #define GET_COLORXY(_x_, _y_) _board[(NSInteger)_x_][(NSInteger)_y_]
@@ -33,7 +33,7 @@ const CGFloat		kClearChainAnimationDelay			= 0.41;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helper functions
-////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////// /////////////////////////////////
 static NSInteger GemIndexForBoardPosition(CGPoint p) 
 {
 	return p.x*GAMEBOARD_NUM_COLS + p.y;
@@ -44,8 +44,8 @@ static NSInteger GemIndexForBoardPosition(CGPoint p)
 #define GEM_SPACING 40.0
 static CGPoint CoordinatesForGemAtPosition(CGPoint p) 
 {
-//	CGSize windowSize = [[CCDirector sharedDirector] winSize];
-//	CGFloat yOrigin = (windowSize.height - windowSize.width)-GEM_SPACING;
+	//	CGSize windowSize = [[CCDirector sharedDirector] winSize];
+	//	CGFloat yOrigin = (windowSize.height - windowSize.width)-GEM_SPACING;
 	CGFloat x = p.x*GEM_SPACING+1 + 12;
 	CGFloat y = GEM_SPACING*(GAMEBOARD_NUM_ROWS-1) - p.y*GEM_SPACING + 12;
 	return CGPointMake(x, y);
@@ -60,7 +60,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	if(!CGRectContainsPoint(rect, p)) {
 		return (CGPoint){NSNotFound, NSNotFound};
 	}
-
+	
 	CGFloat x = GAMEBOARD_NUM_COLS - floor((rect.size.width - p.x)/GEM_SPACING) - 1;
 	CGFloat y = floor((rect.size.height - p.y)/GEM_SPACING);
 	
@@ -111,8 +111,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 - (id)init
 {
 	if((self = [super init])) {
-//		[self resetGameBoard];
-//		self.isTouchEnabled = YES;
+		
 	}
 	return self;
 }
@@ -155,30 +154,21 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 - (void)resetGameBoard
 {
 	unsigned int x, y;
-//	for(c = 0; c < GAMEBOARD_NUM_ROWS; c++) {
-//		for(r = 0; r < GAMEBOARD_NUM_COLS; r++) {
-//			_board[r][c] = arc4random()%GemColorCount;
-//		}
-//	}
-
+	
 	// We need to find out if the generated board has valid chains
 	// if it has, clear them, generate new gems and start over 
 	// We also need to figure out if the current board is solvable
 	// If not, generate a new one(?)
-	// the current algorithm is a simple brute force approach
-	// in the future, tweak it so we can actually define the number solutions 
-	// for the initial state
 	BOOL boardReady = NO;
 	while(!boardReady) {
 		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 		
 		for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 			for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
-//				_board[x][y] = arc4random()%GemColorCount;
-				SET_COLORXY(x, y, RAND_COLOR());
+				_board[x][y] = arc4random()%GemColorCount;
 			}
 		}
-	
+		
 		NSMutableDictionary *chains = [self _findAllChains];
 		while([chains count] > 0) {
 			for(NSString *pointStr in [chains allKeys]) {
@@ -206,12 +196,11 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	
 	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
-//			Gem *gem = [[Gem alloc] initWithGameboard:self position:(CGPoint){x,y} kind:GemKindNormal color:_board[x][y]];
-//			gem.anchorPoint = CGPointZero;
-			Gem *gem = [[Gem alloc] initWithGameboard:self position:(CGPoint){x,y} kind:GemKindNormal color:GET_COLORXY(x, y)];
+			Gem *gem = [[Gem alloc] initWithGameboard:self position:(CGPoint){x,y} kind:GemKindNormal color:_board[x][y]];
+			//			gem.anchorPoint = CGPointZero;
 			gem.position = CoordinatesForGemAtPosition((CGPoint){x,y});
 			
-//			CCLOG(@"%@ = %@, c = %d", NSStringFromCGPoint(gem.point), NSStringFromCGPoint(gem.position), gem.gemColor);
+			//			CCLOG(@"%@ = %@, c = %d", NSStringFromCGPoint(gem.point), NSStringFromCGPoint(gem.position), gem.gemColor);
 			[self addChild:gem];
 			[_gems addObject:gem];
 			[gem release];
@@ -230,9 +219,10 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	// TODO: lookup _validMovesLookupTable, if it's not a valid movement 
 	// we simply schedule two animations (swap node1 <-> node2, swap node2 <-> node1)
 	// else, compute the actual chains, clear them, etc.
-
-//	CC_SWAP(_board[(NSInteger)point1.x][(NSInteger)point1.y], _board[(NSInteger)point2.x][(NSInteger)point2.y]);
-	CC_SWAP(GET_COLOR(point1), GET_COLOR(point2));
+	
+	CC_SWAP(_board[(NSInteger)point1.x][(NSInteger)point1.y], _board[(NSInteger)point2.x][(NSInteger)point2.y]);
+	// schedule the swap animation here
+	//	[_gems exchangeObjectAtIndex:GemIndexForBoardPosition(node1) withObjectAtIndex:GemIndexForBoardPosition(node2)];
 	
 	NSInteger indexGem1 = GemIndexForBoardPosition(point1);
 	NSInteger indexGem2 = GemIndexForBoardPosition(point2);
@@ -241,25 +231,24 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	Gem *gem2 = [_gems objectAtIndex:indexGem2];
 	[_gems exchangeObjectAtIndex:indexGem1 withObjectAtIndex:indexGem2];
     CC_SWAP(gem1.point, gem2.point);
-
-//	NSArray *node1Sequences = [self _floodFill:node1 color:_board[(NSInteger)node1.x][(NSInteger)node1.y]];
-//	NSArray *node2Sequences = [self _floodFill:node2 color:_board[(NSInteger)node2.x][(NSInteger)node2.y]];	
-//	
-//	NSArray *node1Chain = [self _findAllChainsForSequence:node1Sequences];
-//	NSArray *node2Chain = [self _findAllChainsForSequence:node2Sequences];
+	
+	//	NSArray *node1Sequences = [self _floodFill:node1 color:_board[(NSInteger)node1.x][(NSInteger)node1.y]];
+	//	NSArray *node2Sequences = [self _floodFill:node2 color:_board[(NSInteger)node2.x][(NSInteger)node2.y]];	
+	//	
+	//	NSArray *node1Chain = [self _findAllChainsForSequence:node1Sequences];
+	//	NSArray *node2Chain = [self _findAllChainsForSequence:node2Sequences];
 	
 	NSArray *point1Chain = [self _findAllChainsFromPoint:point1];
 	NSArray *point2Chain = [self _findAllChainsFromPoint:point2];
-
-	id swapGem1Action = [CCMoveTo actionWithDuration:kSwapAnimationDuration position:gem2.position];
-	id swapGem2Action = [CCMoveTo actionWithDuration:kSwapAnimationDuration position:gem1.position];
+	
+	id swapGem1Action = [CCMoveTo actionWithDuration:0.4 position:gem2.position];
+	id swapGem2Action = [CCMoveTo actionWithDuration:0.4 position:gem1.position];
 	
 	if([point1Chain count] + [point2Chain count] == 0) {
-		id swapGem1ReverseAction = [CCMoveTo actionWithDuration:kSwapAnimationDuration position:gem1.position];
-		id swapGem2ReverseAction = [CCMoveTo actionWithDuration:kSwapAnimationDuration position:gem2.position];
-
-//		CC_SWAP(_board[(NSInteger)point1.x][(NSInteger)point1.y], _board[(NSInteger)point2.x][(NSInteger)point2.y]);
-		CC_SWAP(GET_COLOR(point1), GET_COLOR(point2));
+		id swapGem1ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem1.position];
+		id swapGem2ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem2.position];
+		
+		CC_SWAP(_board[(NSInteger)point1.x][(NSInteger)point1.y], _board[(NSInteger)point2.x][(NSInteger)point2.y]);
         CC_SWAP(gem1.point, gem2.point);
 		[_gems exchangeObjectAtIndex:indexGem1 withObjectAtIndex:indexGem2];
 		
@@ -272,16 +261,15 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	else {
 		[gem1 runAction:swapGem1Action];
 		[gem2 runAction:swapGem2Action];
-
-		double delayInSeconds = kClearChainAnimationDelay;
+		
+		double delayInSeconds = 0.41;
 		dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
 		dispatch_after(popTime, dispatch_get_main_queue(), ^(void) {
 			[self clearChain:point1 sequence:point1Chain];
 			[self clearChain:point2 sequence:point2Chain];
 			[self _dropDanglingGems];
 			[self _generateAndDropDownGemsForClearedChains];
-			
-			[self _findAndClearAllComboChains];
+//			[self _findAndClearAllComboChains];
 		});
 	}
 }
@@ -308,34 +296,79 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		case GameboardMovementDirectionRight:
 			if(point.x + 1 < GAMEBOARD_NUM_COLS) destPoint = CGPointMake(point.x + 1, point.y);
 			break;
-
+			
 		default: break;
 	}
 	
 	if(CGPointEqualToPoint(point, destPoint)) {
 		return NO;
 	}
-
+	
 	[self swapGemAtPoint:point withGemAtPoint:destPoint];
 	return YES;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Iterates the whole board and generates new gems for all cells marked as cleared (-1)
+// Schedules the drop down animation of all generated gems
+////////////////////////////////////////////////////////////////////////////////
+- (void)_generateAndDropDownGemsForClearedChains
+{
+	NSMutableArray *generatedGems = [self _generateGemsForClearedCells];
+	for(NSString *pointStr in generatedGems) {
+		// Create the actual gem sprite, add it outside the gameboard and schedule
+		// a drop animation action to the destination point
+		CGPoint boardPos = CGPointFromString(pointStr);
+		Gem *gem = [[Gem alloc] initWithGameboard:self position:boardPos kind:GemKindNormal color:_board[(NSInteger)boardPos.x][(NSInteger)boardPos.y]];
+		CGPoint dstSpritePosition = CoordinatesForGemAtPosition(gem.point);
+		CGPoint srcSpritePosition = {dstSpritePosition.x, kGameboardNumberOfRows*kGameboardCellSize.height+kGameboardCellSize.height};
+		gem.position = srcSpritePosition;
+		
+		[self addChild:gem];
+		[gem runAction:[CCMoveTo actionWithDuration:0.4 position:dstSpritePosition]];
+		
+		[_gems replaceObjectAtIndex:GemIndexForBoardPosition(boardPos) withObject:gem];
+		[gem release];
+	}
+	[self printBoard];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Iterates the whole board and generates new gems for all cells marked as cleared (-1)
+// Returns the list of all positions where new gems have been generated
+////////////////////////////////////////////////////////////////////////////////
+- (NSMutableArray *)_generateGemsForClearedCells
+{
+	NSMutableArray *generatedGems = [[NSMutableArray alloc] init];
+	
+	NSInteger x, y;
+	for(x = GAMEBOARD_NUM_COLS-1; x >= 0; x--) {
+		for(y = GAMEBOARD_NUM_ROWS; y >= 0; y--) {
+			if(_board[x][y] == -1) {
+				_board[x][y] = arc4random()%GemColorCount;
+				[generatedGems addObject:NSStringFromCGPoint((CGPoint){x,y})];
+			}
+		}
+	}
+	return [generatedGems autorelease];
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Clears (marks) all gems in a given chain
 ////////////////////////////////////////////////////////////////////////////////
-#define IsKindOfClass(_obj_, _class_) ([_obj_ isKindOfClass:[_class_ class]])
 - (void)clearChain:(CGPoint)point sequence:(NSArray *)sequence
 {
 	//	NSInteger x, y;
 	for(NSString *pointStr in sequence) {
 		CGPoint p = CGPointFromString(pointStr);
-//		_board[(NSInteger)p.x][(NSInteger)p.y] = -1;
-		SET_COLOR(point, GemColorClear);
-		
+		_board[(NSInteger)p.x][(NSInteger)p.y] = -1;
+
 		NSInteger gemIndex = GemIndexForBoardPosition(p);
+//		Gem *gem = [_gems objectAtIndex:gemIndex];
+//		[gem removeFromParentAndCleanup:YES];
+//		[_gems replaceObjectAtIndex:gemIndex withObject:[NSNull null]];
+
 		if([[_gems objectAtIndex:gemIndex] isKindOfClass:[Gem class]]) { // when clearing multiple intersecting chains, intersecting gems may have been cleared already
-//			Gem *gem = [_gems objectAtIndex:gemIndex];
-//			[gem removeFromParentAndCleanup:YES];
 			[[_gems objectAtIndex:gemIndex] removeFromParentAndCleanup:YES];
 			[_gems replaceObjectAtIndex:gemIndex withObject:[NSNull null]];
 		}
@@ -354,14 +387,52 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	NSInteger x, y;
 	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
-//			if(_board[x][y] == GemColorClear) {
-//				_board[x][y] = arc4random()%GemColorCount;
-//			}
-			if(GET_COLORXY(x, y) == GemColorClear) {
-				SET_COLORXY(x, y, RAND_COLOR());
+			if(_board[x][y] == -1) {
+				_board[x][y] = arc4random()%GemColorCount;
 			}
 		}
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Shifts down all gems that are above cleared chains
+// Also schedules the drop down animation
+// NOTE: should we just returns the list of position updates so we can deliver them to an animator later?
+////////////////////////////////////////////////////////////////////////////////
+- (void)_dropDanglingGems
+{
+	NSInteger x, y;
+	[self printBoard];
+	for(x = GAMEBOARD_NUM_COLS-1; x >= 0; x--) {
+		for(y = GAMEBOARD_NUM_ROWS-1; y >= 0; y--) {
+			if(_board[x][y] != -1) continue;
+			NSInteger py = y-1;
+			while(py >= 0 && _board[x][py] == -1) {
+				py--;
+			}
+			if(py >= 0) {
+				_board[x][y] = _board[x][py];
+				_board[x][py] = -1;
+				// schedule the drop down animation here
+				// or
+				// save the position update (src => destination) and return the list
+				CGPoint oldPos = {x, py};
+				CGPoint newPos = {x, y};
+				
+				NSInteger oldIndex = GemIndexForBoardPosition(oldPos);
+				NSInteger newIndex = GemIndexForBoardPosition(newPos);
+				
+				[_gems exchangeObjectAtIndex:oldIndex withObjectAtIndex:newIndex];
+				id gem = [_gems objectAtIndex:newIndex];
+				if([gem isKindOfClass:[Gem class]]) {
+					[(Gem *)gem setPoint:newPos];
+					CCMoveBy *action = [CCMoveTo actionWithDuration:0.3 position:CoordinatesForGemAtPosition(newPos)];
+					[(Gem *)gem runAction:action];
+				}
+			}
+		}
+	}
+	// schedule the drop animations for every gem we actually moved down
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -404,8 +475,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	NSMutableString	*matrixStr = [[NSMutableString alloc] initWithString:@"\n"];
 	for(y = 0; y < GAMEBOARD_NUM_COLS; y++) {
 		for(x = 0; x < GAMEBOARD_NUM_ROWS; x++) {
-//			[matrixStr appendFormat:@"[%2d] ", _board[x][y]];
-			[matrixStr appendFormat:@"[%2d] ", GET_COLORXY(x, y)];
+			[matrixStr appendFormat:@"[%2d] ", _board[x][y]];
 		}
 		[matrixStr appendString:@"\n"];
 	}
@@ -450,30 +520,30 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 			[visitedNodes setObject:[NSNull null] forKey:nodeKey];
 		}
 		
-		if(GET_COLORXY(x, y) == color) {
+		if(_board[x][y] == color) {
 			[matches addObject:NSStringFromCGPoint(p)];
 		}
 		
 		NSInteger cursor = x-1;
-		if(cursor >= 0 && GET_COLORXY(cursor, y) == color) {
+		if(cursor >= 0 && _board[cursor][y] == color) {
 			[queue addObject:NSStringFromCGPoint((CGPoint){cursor, y})];
 			cursor--;
 		}
 		
 		cursor = x+1;
-		if(cursor < GAMEBOARD_NUM_ROWS && GET_COLORXY(cursor, y) == color) {
+		if(cursor < GAMEBOARD_NUM_ROWS && _board[cursor][y] == color) {
 			[queue addObject:NSStringFromCGPoint((CGPoint){cursor, y})];
 			cursor++;
 		}
 		
 		cursor = y-1;
-		if(cursor >= 0 && GET_COLORXY(x, cursor) == color) {
+		if(cursor >= 0 && _board[x][cursor] == color) {
 			[queue addObject:NSStringFromCGPoint((CGPoint){x, cursor})];
 			cursor--;
 		}
 		
 		cursor = y+1;
-		if(cursor < GAMEBOARD_NUM_COLS && GET_COLORXY(x, cursor) == color) {
+		if(cursor < GAMEBOARD_NUM_COLS && _board[x][cursor] == color) {
 			[queue addObject:NSStringFromCGPoint((CGPoint){x, cursor})];
 			cursor++;
 		}
@@ -503,8 +573,8 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 - (NSArray *)_findAllChainsForSequence:(NSArray *)sequence
 {
-//	NSLog(@"***** FINDING ALL VALID CHAINS *****");
-//	NSLog(@"sequence = %@", sequence);
+	//	NSLog(@"***** FINDING ALL VALID CHAINS *****");
+	//	NSLog(@"sequence = %@", sequence);
 	
 	NSArray *sortedByColumns = [sequence sortedArrayWithOptions:NSSortStable usingComparator:(NSComparator)^(id obj1, id obj2) {
 		CGPoint p1 = CGPointFromString(obj1);
@@ -576,7 +646,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	}
 	[tmpStack release];
 	
-//	NSLog(@"chain = %@", chain);
+	//	NSLog(@"chain = %@", chain);
 	
 	return [chain autorelease];
 }
@@ -585,7 +655,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 - (NSArray *)_findAllChainsFromPoint:(CGPoint)point
 {
-	NSArray *sequences = [self _floodFill:point color:GET_COLOR(point)];
+	NSArray *sequences = [self _floodFill:point color:_board[(NSInteger)point.x][(NSInteger)point.y]];
 	return [self _findAllChainsForSequence:sequences];
 }
 
@@ -625,9 +695,9 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	NSMutableDictionary *matchesByPos = [[NSMutableDictionary alloc] init];
 	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
-			NSArray *sequence = [self _floodFill:(CGPoint){x, y} color:GET_COLORXY(x, y)];
+			NSArray *sequence = [self _floodFill:(CGPoint){x, y} color:_board[x][y]];
 			if([sequence count] == 0) continue;
-
+			
 			NSArray *chains = [self _findAllChainsForSequence:sequence];
 			if([chains count] == 0) continue;
 			
@@ -635,6 +705,20 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		}
 	}
 	return [matchesByPos autorelease];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Inspects the whole board and returns a collection of all valid moves:
+// [point] => [list of all valid adjacent swaps]
+// NOTE: consider turning this in an updateAllValidMoves method and cache the results
+// any subsequent movement attempt would only require a dictionary lookup
+// after all chains are processed, we would invoke this method agan to recompute
+// all valid moves - this would also make the job of handing tips to the user a lot easier
+////////////////////////////////////////////////////////////////////////////////
+- (NSDictionary *)_findAllValidMoves
+{
+	[self _updateAllValidMoves];
+	return _validMovesLookupTable;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -658,20 +742,6 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		[self _dropDanglingGems];
 		[self _generateAndDropDownGemsForClearedChains];
 	}
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Inspects the whole board and returns a collection of all valid moves:
-// [point] => [list of all valid adjacent swaps]
-// NOTE: consider turning this in an updateAllValidMoves method and cache the results
-// any subsequent movement attempt would only require a dictionary lookup
-// after all chains are processed, we would invoke this method agan to recompute
-// all valid moves - this would also make the job of handing tips to the user a lot easier
-////////////////////////////////////////////////////////////////////////////////
-- (NSDictionary *)_findAllValidMoves
-{
-	[self _updateAllValidMoves];
-	return _validMovesLookupTable;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -718,121 +788,19 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	if(!gameboardContainsPoints) {
 		return NO;
 	}
+	//	swap(&_board[(NSInteger)p1.x][(NSInteger)p1.y], &_board[(NSInteger)p2.x][(NSInteger)p2.y]);
+	CC_SWAP(_board[(NSInteger)p1.x][(NSInteger)p1.y], _board[(NSInteger)p2.x][(NSInteger)p2.y]);
 	
-//	CC_SWAP(_board[(NSInteger)p1.x][(NSInteger)p1.y], _board[(NSInteger)p2.x][(NSInteger)p2.y]);
-	CC_SWAP(GET_COLOR(p1), GET_COLOR(p2));
+	NSArray *p1Sequences = [self _floodFill:p1 color:_board[(NSInteger)p1.x][(NSInteger)p1.y]];
+	NSArray *p2Sequences = [self _floodFill:p2 color:_board[(NSInteger)p2.x][(NSInteger)p2.y]];	
 	
-//	NSArray *p1Sequences = [self _floodFill:p1 color:_board[(NSInteger)p1.x][(NSInteger)p1.y]];
-//	NSArray *p2Sequences = [self _floodFill:p2 color:_board[(NSInteger)p2.x][(NSInteger)p2.y]];	
-
-	NSArray *p1Sequences = [self _floodFill:p1 color:GET_COLOR(p1)];
-	NSArray *p2Sequences = [self _floodFill:p2 color:GET_COLOR(p2)];	
-
 	NSArray *p1Chain = [self _findAllChainsForSequence:p1Sequences];
 	NSArray *p2Chain = [self _findAllChainsForSequence:p2Sequences];
-
-//	CC_SWAP(_board[(NSInteger)p2.x][(NSInteger)p2.y], _board[(NSInteger)p1.x][(NSInteger)p1.y]);
-	CC_SWAP(GET_COLOR(p2), GET_COLOR(p1));
+	
+	//	swap(&_board[(NSInteger)p2.x][(NSInteger)p2.y], &_board[(NSInteger)p1.x][(NSInteger)p1.y]);
+	CC_SWAP(_board[(NSInteger)p2.x][(NSInteger)p2.y], _board[(NSInteger)p1.x][(NSInteger)p1.y]);
 	
 	return ([p1Chain count] + [p2Chain count] > 0);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Iterates the whole board and generates new gems for all cells marked as cleared (GemColorClear)
-// Schedules the drop down animation of all generated gems
-////////////////////////////////////////////////////////////////////////////////
-- (void)_generateAndDropDownGemsForClearedChains
-{
-	NSMutableArray *generatedGems = [self _generateGemsForClearedCells];
-	for(NSString *pointStr in generatedGems) {
-		// Create the actual gem sprite, add it outside the gameboard and schedule
-		// a drop animation action to the destination point
-		CGPoint boardPos = CGPointFromString(pointStr);
-		Gem *gem = [[Gem alloc] initWithGameboard:self position:boardPos kind:GemKindNormal color:GET_COLOR(boardPos)];
-		CGPoint dstSpritePosition = CoordinatesForGemAtPosition(gem.point);
-		CGPoint srcSpritePosition = {dstSpritePosition.x, kGameboardNumberOfRows*kGameboardCellSize.height+kGameboardCellSize.height};
-		gem.position = srcSpritePosition;
-		
-		[self addChild:gem];
-		[gem runAction:[CCMoveTo actionWithDuration:kDropNewGemAnimationDuration position:dstSpritePosition]];
-		
-		[_gems replaceObjectAtIndex:GemIndexForBoardPosition(boardPos) withObject:gem];
-		[gem release];
-	}
-	[self printBoard];
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Iterates the whole board and generates new gems for all cells marked as cleared (GemColorClear)
-// Returns the list of all positions where new gems have been generated
-// consider renaming to _generateGemsOnEmptySpaces || _generateGemsForEmptySpaces
-////////////////////////////////////////////////////////////////////////////////
-- (NSMutableArray *)_generateGemsForClearedCells
-{
-	NSMutableArray *generatedGems = [[NSMutableArray alloc] init];
-	
-	NSInteger x, y;
-	for(x = GAMEBOARD_NUM_COLS-1; x >= 0; x--) {
-		for(y = GAMEBOARD_NUM_ROWS; y >= 0; y--) {
-			//			if(_board[x][y] == GemColorClear) {
-			//				_board[x][y] = arc4random()%GemColorCount;
-			//				[generatedGems addObject:NSStringFromCGPoint((CGPoint){x,y})];
-			//			}
-			if(GET_COLORXY(x, y) == GemColorClear) {
-				SET_COLORXY(x, y, RAND_COLOR());
-				[generatedGems addObject:NSStringFromCGPoint((CGPoint){x,y})];
-			}
-		}
-	}
-	return [generatedGems autorelease];
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Shifts down all gems that are above cleared chains
-// Also schedules the drop down animation
-// NOTE: should we just returns the list of position updates so we can deliver them to an animator later?
-////////////////////////////////////////////////////////////////////////////////
-- (void)_dropDanglingGems
-{
-	NSInteger x, y;
-	[self printBoard];
-	for(x = GAMEBOARD_NUM_COLS-1; x >= 0; x--) {
-		for(y = GAMEBOARD_NUM_ROWS-1; y >= 0; y--) {
-			if(_board[x][y] != GemColorClear) continue;
-			NSInteger py = y-1;
-			//			while(py >= 0 && _board[x][py] == GemColorClear) {
-			//				py--;
-			//			}
-			while(py >= 0 && GET_COLORXY(x, py) == GemColorClear) {
-				py--;
-			}
-			
-			if(py >= 0) {
-				//				_board[x][y] = _board[x][py];
-				//				_board[x][py] = GemColorClear;
-				SET_COLORXY(x, y, GET_COLORXY(x, py));
-				SET_COLORXY(x, py, GemColorClear);
-				
-				// schedule the drop down animation here
-				// or
-				// save the position update (src => destination) and return the list
-				CGPoint oldPos = {x, py};
-				CGPoint newPos = {x, y};
-				
-				NSInteger oldIndex = GemIndexForBoardPosition(oldPos);
-				NSInteger newIndex = GemIndexForBoardPosition(newPos);
-				
-				[_gems exchangeObjectAtIndex:oldIndex withObjectAtIndex:newIndex];
-				id gem = [_gems objectAtIndex:newIndex];
-				if([gem isKindOfClass:[Gem class]]) {
-					[(Gem *)gem setPoint:newPos];
-					CCMoveTo *action = [CCMoveTo actionWithDuration:kDropDanglingGemAnimationDuration position:CoordinatesForGemAtPosition(newPos)];
-					[(Gem *)gem runAction:action];
-				}
-			}
-		}
-	}
-	// schedule the drop animations for every gem we actually moved down
 }
 
 ////////////////////////////////////////////////////////////////////////////////
