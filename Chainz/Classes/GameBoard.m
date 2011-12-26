@@ -31,6 +31,8 @@ const CGFloat       kClearChainAnimationDelay           = 0.41;
 
 #define RAND_COLOR() (arc4random()%GemColorCount)
 
+#define GEM_ACTION(_gem_, _action_) ([NSArray arrayWithObjects:_gem_, _action_, nil])
+
 ////////////////////////////////////////////////////////////////////////////////
 // Helper functions
 /////////////////////////////////////////////// /////////////////////////////////
@@ -90,6 +92,8 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 
 - (void)_drawGameboardGrid;
 
+- (void)_animateAllPendingChanges;
+
 @end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -103,6 +107,9 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 - (void)dealloc
 {
 	[_validMovesLookupTable release];
+	[_gemDestructionQueue release];
+	[_gemDropdownQueue release];
+	[_gemGenerationQueue release];
 	[super dealloc];
 }
 
@@ -111,7 +118,9 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 - (id)init
 {
 	if((self = [super init])) {
-		
+		_gemDestructionQueue 	= [[NSMutableArray alloc] init];
+		_gemDropdownQueue 		= [[NSMutableArray alloc] init];
+		_gemGenerationQueue 	= [[NSMutableArray alloc] init];
 	}
 	return self;
 }
@@ -236,7 +245,8 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	id swapGem1Action = [CCMoveTo actionWithDuration:0.4 position:gem2.position];
 	id swapGem2Action = [CCMoveTo actionWithDuration:0.4 position:gem1.position];
 	
-	if([point1Chain count] + [point2Chain count] == 0) {
+	BOOL canSwapGems = ([point1Chain count] + [point2Chain count] > 0);
+	if(!canSwapGems) {
 		id swapGem1ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem1.position];
 		id swapGem2ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem2.position];
 		
@@ -254,6 +264,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		[gem1 runAction:swapGem1Action];
 		[gem2 runAction:swapGem2Action];
 		
+		// replace this with the appropriate CCScheduler invocations
 		double delayInSeconds = 0.41;
 		dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
 		dispatch_after(popTime, dispatch_get_main_queue(), ^(void) {
@@ -261,7 +272,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 			[self clearChain:point2 sequence:point2Chain];
 			[self _dropDanglingGems];
 			[self _generateAndDropDownGemsForClearedChains];
-//			[self _findAndClearAllComboChains];
+			[self _findAndClearAllComboChains];
 		});
 	}
 }
@@ -350,6 +361,8 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 - (void)clearChain:(CGPoint)point sequence:(NSArray *)sequence
 {
+	CCLOG(@"CLEARING CHAIN <%@: %@>", NSStringFromCGPoint(point), sequence);
+	
 	//	NSInteger x, y;
 	for(NSString *pointStr in sequence) {
 		CGPoint p = CGPointFromString(pointStr);
@@ -361,7 +374,9 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 //		[_gems replaceObjectAtIndex:gemIndex withObject:[NSNull null]];
 
 		if([[_gems objectAtIndex:gemIndex] isKindOfClass:[Gem class]]) { // when clearing multiple intersecting chains, intersecting gems may have been cleared already
-			[[_gems objectAtIndex:gemIndex] removeFromParentAndCleanup:YES];
+		 // instead of simply removing the sprite, add it to a "destroy" list
+			[[_gems objectAtIndex:gemIndex] removeFromParentAndCleanup:YES]; // comment this (actual removal will be performed later on)
+//			[_gemDestructionQueue addObject:[_gems objectAtIndex:gemIndex]]; // gem is now queued for destruction
 			[_gems replaceObjectAtIndex:gemIndex withObject:[NSNull null]];
 		}
 	}
@@ -418,7 +433,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 				id gem = [_gems objectAtIndex:newIndex];
 				if([gem isKindOfClass:[Gem class]]) {
 					[(Gem *)gem setPoint:newPos];
-					CCMoveBy *action = [CCMoveTo actionWithDuration:0.3 position:CoordinatesForGemAtPosition(newPos)];
+					CCMoveTo *action = [CCMoveTo actionWithDuration:0.3 position:CoordinatesForGemAtPosition(newPos)];
 					[(Gem *)gem runAction:action];
 				}
 			}
@@ -562,12 +577,18 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 // Given the result of applying the FloodFill algorithm to a given point
 // find all valid chains (given our game rules, every sequence of 3 or more columns or rows)
+//
+// TODO: modify to allow a reference point to be passed. The resulting chain must contain
+// the point
 ////////////////////////////////////////////////////////////////////////////////
 - (NSArray *)_findAllChainsForSequence:(NSArray *)sequence
 {
 	//	NSLog(@"***** FINDING ALL VALID CHAINS *****");
 	//	NSLog(@"sequence = %@", sequence);
 	
+	// First we'll sort all points by X and by Y
+	
+	// Sort sequence by X
 	NSArray *sortedByColumns = [sequence sortedArrayWithOptions:NSSortStable usingComparator:(NSComparator)^(id obj1, id obj2) {
 		CGPoint p1 = CGPointFromString(obj1);
 		CGPoint p2 = CGPointFromString(obj2);
@@ -584,6 +605,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	}];
 	//	NSLog(@"sortedByColumns = %@", sortedByColumns);
 	
+	// Sort sequence by Y
 	NSArray *sortedByRows = [sequence sortedArrayWithOptions:NSSortStable usingComparator:(NSComparator)^(id obj1, id obj2) {
 		CGPoint p1 = CGPointFromString(obj1);
 		CGPoint p2 = CGPointFromString(obj2);
@@ -604,6 +626,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	NSMutableArray *chain = [[NSMutableArray alloc] init];
 	NSMutableArray *tmpStack = [[NSMutableArray alloc] init];
 	
+	// ensure we have at least kGameboardMinSequence contiguous points on the same column
 	CGFloat prevX = -1;
 	for(NSString *pv in sortedByColumns) {
 		CGPoint p = CGPointFromString(pv);
@@ -620,7 +643,8 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		[chain addObjectsFromArray:tmpStack];	
 	}
 	[tmpStack removeAllObjects];
-	
+
+	// ensure we have at least kGameboardMinSequence contiguous points on the same row
 	CGFloat prevY = -1;
 	for(NSString *pv in sortedByRows) {
 		CGPoint p = CGPointFromString(pv);
@@ -719,21 +743,46 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 // after swapping gems and clearing the produced chains and dropping dangling gems
 // we also need to check whether new chains were formed as a result and clear them too0
 ////////////////////////////////////////////////////////////////////////////////
+//- (void)_findAndClearAllComboChains
+//{
+//	
+//	BOOL done = NO;
+//	while(!done) {
+//		NSDictionary *comboChains = [self _findAllChains];
+//		if([comboChains count] == 0) {
+//			done = YES;
+//			break;
+//		}
+//		for(NSString *pointStr in [comboChains allKeys]) {
+//			[self clearChain:CGPointFromString(pointStr) sequence:[comboChains objectForKey:pointStr]];
+//		}
+//		[self _dropDanglingGems];
+//		[self _generateAndDropDownGemsForClearedChains];
+//	}
+//}
+
 - (void)_findAndClearAllComboChains
 {
-	BOOL done = NO;
-	while(!done) {
+	double delayInSeconds = 0.41;
+	dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+	dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+		CCLOG(@"Finding combo chains...");
 		NSDictionary *comboChains = [self _findAllChains];
 		if([comboChains count] == 0) {
-			done = YES;
-			break;
+			CCLOG(@"No combo chains found.");
+			return;
 		}
+		
+		CCLOG(@"Combo chains found: %@", comboChains);
+		
 		for(NSString *pointStr in [comboChains allKeys]) {
 			[self clearChain:CGPointFromString(pointStr) sequence:[comboChains objectForKey:pointStr]];
 		}
 		[self _dropDanglingGems];
 		[self _generateAndDropDownGemsForClearedChains];
-	}
+		
+		[self _findAndClearAllComboChains]; // recursively invoke the function
+	});
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -780,7 +829,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	if(!gameboardContainsPoints) {
 		return NO;
 	}
-	//	swap(&_board[(NSInteger)p1.x][(NSInteger)p1.y], &_board[(NSInteger)p2.x][(NSInteger)p2.y]);
+
 	CC_SWAP(_board[(NSInteger)p1.x][(NSInteger)p1.y], _board[(NSInteger)p2.x][(NSInteger)p2.y]);
 	
 	NSArray *p1Sequences = [self _floodFill:p1 color:_board[(NSInteger)p1.x][(NSInteger)p1.y]];
@@ -789,10 +838,49 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	NSArray *p1Chain = [self _findAllChainsForSequence:p1Sequences];
 	NSArray *p2Chain = [self _findAllChainsForSequence:p2Sequences];
 	
-	//	swap(&_board[(NSInteger)p2.x][(NSInteger)p2.y], &_board[(NSInteger)p1.x][(NSInteger)p1.y]);
 	CC_SWAP(_board[(NSInteger)p2.x][(NSInteger)p2.y], _board[(NSInteger)p1.x][(NSInteger)p1.y]);
 	
 	return ([p1Chain count] + [p2Chain count] > 0);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)_animateAllPendingChanges
+{
+	for(Gem *gem in _gemDestructionQueue) {
+		[gem removeFromParentAndCleanup:YES];
+	}
+	[_gemDestructionQueue removeAllObjects];
+	
+	for(NSArray *dropAction in _gemDropdownQueue) {
+		Gem *gem = [dropAction objectAtIndex:0];
+		CCAction *action = [dropAction objectAtIndex:1];
+		[gem runAction:action];
+	}
+	[_gemDropdownQueue removeAllObjects];
+	
+	for(NSArray *generateAction in _gemGenerationQueue) {
+		Gem *gem = [generateAction objectAtIndex:0];
+		CCAction *action = [generateAction objectAtIndex:1];
+		[self addChild:gem];
+		[gem runAction:action];
+	}
+	[_gemGenerationQueue removeAllObjects];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)_enqueueGemDestructionAnimation:(Gem *)gem
+{
+	[_gemDestructionQueue addObject:gem];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)_enqueueDropGemAnimation:(Gem *)gem point:(CGPoint)dropDestination
+{
+	CCMoveTo *dropAction = [CCMoveTo actionWithDuration:0.3 position:CoordinatesForGemAtPosition(dropDestination)];
+	[_gemDropdownQueue addObject:[NSArray arrayWithObjects:gem, dropAction, nil]];
 }
 
 ////////////////////////////////////////////////////////////////////////////////

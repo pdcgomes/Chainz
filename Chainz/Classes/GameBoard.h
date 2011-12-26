@@ -36,6 +36,11 @@ extern const CGSize		kGameboardCellSize;
 	NSInteger				_board[GAMEBOARD_NUM_COLS][GAMEBOARD_NUM_ROWS];
 	NSMutableArray			*_gems;
 	NSMutableDictionary		*_validMovesLookupTable;
+	
+	// test code
+	NSMutableArray			*_gemDestructionQueue;
+	NSMutableArray			*_gemDropdownQueue;
+	NSMutableArray			*_gemGenerationQueue;
 }
 
 - (void)resetGameBoard;
