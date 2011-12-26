@@ -174,7 +174,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		
 		for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 			for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
-				_board[x][y] = arc4random()%GemColorCount;
+				_board[x][y] = RAND_COLOR();
 			}
 		}
 		
@@ -348,7 +348,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	for(x = GAMEBOARD_NUM_COLS-1; x >= 0; x--) {
 		for(y = GAMEBOARD_NUM_ROWS; y >= 0; y--) {
 			if(_board[x][y] == -1) {
-				_board[x][y] = arc4random()%GemColorCount;
+				_board[x][y] = RAND_COLOR();
 				[generatedGems addObject:NSStringFromCGPoint((CGPoint){x,y})];
 			}
 		}
@@ -395,7 +395,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
 			if(_board[x][y] == -1) {
-				_board[x][y] = arc4random()%GemColorCount;
+				_board[x][y] = RAND_COLOR();
 			}
 		}
 	}
