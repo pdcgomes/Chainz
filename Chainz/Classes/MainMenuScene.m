@@ -8,17 +8,21 @@
 
 #import "MainMenuScene.h"
 #import "ClassicGameScene.h"
+#import "Terrain.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 @interface MainMenuScene()
 
 - (void)_generateBackground;
+
 - (ccColor4F)_randomBrightColor;
 - (CCSprite *)_backgroundSpriteWithColor1:(ccColor4F)color1 color2:(ccColor4F)color2 textureSize:(float)textureSize cols:(int)numCols rows:(int)numRows;
+- (CCSprite *)_backgroundGradientSpriteWithColor:(ccColor4F)color textureSize:(float)textureSize;
 
 - (void)_renderHorizontalStripes:(float)textureSize color:(ccColor4F)color stripes:(int)stripes;
 - (void)_renderVerticalStripes:(float)textureSize color:(ccColor4F)color stripes:(int)stripes;
+- (void)_renderCurvyStripes:(float)textureSize color:(ccColor4F)color stripes:(int)stripes;
 - (void)_renderGradient:(float)textureSize;
 - (void)_renderHighlight:(float)textureSize;
 - (void)_renderNoise:(float)textureSize;
@@ -69,7 +73,7 @@
 		options.position		= ccp(0, 30);
 		highscores.position		= ccp(0, 0);
 
-		[self addChild:mainMenu];
+		[self addChild:mainMenu z:2];
 		[self scheduleUpdate];
 	}
 	return self;
@@ -104,15 +108,72 @@
 {
 	ccColor4F color1 = [self _randomBrightColor];
 	ccColor4F color2 = [self _randomBrightColor];
+	ccColor4F color3 = [self _randomBrightColor];
+
+	CGSize windowSize = [[CCDirector sharedDirector] winSize];
+	CGPoint center = ccp(windowSize.width/2, windowSize.height/2);
+	
+	_backgroundGradientSprite = [self _backgroundGradientSpriteWithColor:color3 textureSize:512];
+	[_backgroundGradientSprite setPosition:center];
+	[_backgroundGradientSprite.texture setTexParameters:&(ccTexParams){ GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT }];
+	[self addChild:_backgroundGradientSprite];
 
 	_backgroundSprite = [self _backgroundSpriteWithColor1:color1 color2:color2 textureSize:512 cols:8 rows:8];
-	
-	CGSize windowSize = [[CCDirector sharedDirector] winSize];
 	_backgroundSprite.position = ccp(windowSize.width/2, windowSize.height/2);
-	ccTexParams textureParams = { GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT };
-	[_backgroundSprite.texture setTexParameters:&textureParams];
 	
-	[self addChild:_backgroundSprite];
+//	ccTexParams textureParams = { GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT };
+//	[_backgroundSprite.texture setTexParameters:&textureParams];
+
+//	[self addChild:_backgroundSprite];
+
+	ccTexParams textureParams = { GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_CLAMP_TO_EDGE };
+	[_backgroundSprite.texture setTexParameters:&textureParams];
+
+	_terrain = [Terrain node];
+	_terrain.stripes = _backgroundSprite;
+	[self addChild:_terrain z:1];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (CCSprite *)_backgroundGradientSpriteWithColor:(ccColor4F)color textureSize:(float)textureSize
+{
+	CCRenderTexture *textureRenderer = [CCRenderTexture renderTextureWithWidth:textureSize height:textureSize];
+	[textureRenderer beginWithClear:color.r g:color.g b:color.b a:color.a];
+	
+    glDisable(GL_TEXTURE_2D);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    
+    float gradientAlpha = 0.7;    
+    CGPoint vertices[4];
+    ccColor4F colors[4];
+    int vertex = 0;
+    
+    vertices[vertex] = CGPointMake(0, 0);
+    colors[vertex++] = (ccColor4F){0, 0, 0, 0 };
+    vertices[vertex] = CGPointMake(textureSize, 0);
+    colors[vertex++] = (ccColor4F){0, 0, 0, 0};
+    vertices[vertex] = CGPointMake(0, textureSize);
+    colors[vertex++] = (ccColor4F){0, 0, 0, gradientAlpha};
+    vertices[vertex] = CGPointMake(textureSize, textureSize);
+    colors[vertex++] = (ccColor4F){0, 0, 0, gradientAlpha};
+    
+    glVertexPointer(2, GL_FLOAT, 0, vertices);
+    glColorPointer(4, GL_FLOAT, 0, colors);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, (GLsizei)vertex);
+    
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnable(GL_TEXTURE_2D);
+    
+	[self _renderNoise:textureSize];
+//    CCSprite *noise = [CCSprite spriteWithFile:@"noise.png"];
+//    [noise setBlendFunc:(ccBlendFunc){GL_DST_COLOR, GL_ZERO}];
+//    noise.position = ccp(textureSize/2, textureSize/2);
+//    [noise visit];	
+	
+	[textureRenderer end];
+	
+	return [CCSprite spriteWithTexture:textureRenderer.sprite.texture];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -151,7 +212,8 @@
     glVertexPointer(2, GL_FLOAT, 0, vertices);
     glDrawArrays(GL_TRIANGLES, 0, (GLsizei)numVertices);
 	
-	// Render stripes
+//	glEnable(GL_BLEND);
+//	glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
 //	[self _renderHorizontalStripes:textureSize color:color2 stripes:numRows];
 //	[self _renderVerticalStripes:textureSize color:color2 stripes:numCols];
 //	[self _renderGradient:textureSize];
@@ -307,6 +369,12 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+- (void)_renderCurvyStripes:(float)textureSize color:(ccColor4F)color stripes:(int)stripes
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 - (void)_renderGradient:(float)textureSize
 {
 	CGPoint vertices[6];
@@ -391,7 +459,12 @@
     offset += pixelsPerSecond * dt;
     
     CGSize textureSize = _backgroundSprite.textureRect.size;
-    [_backgroundSprite setTextureRect:CGRectMake(offset, 0, textureSize.width, textureSize.height)];
+//    [_backgroundSprite setTextureRect:CGRectMake(offset, 0, textureSize.width, textureSize.height)];
+	
+	[_backgroundGradientSprite setTextureRect:CGRectMake(offset*0.4, 0, textureSize.width, textureSize.height)];
+//	[_backgroundSprite setTextureRect:CGRectMake(offset*0.7, 0, textureSize.width, textureSize.height)];
+	
+	[_terrain setOffsetX:offset];
 }
 
 @end

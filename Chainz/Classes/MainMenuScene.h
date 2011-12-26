@@ -8,9 +8,12 @@
 
 #import "cocos2d.h"
 
+@class Terrain;
 @interface MainMenuScene : CCLayer
 {
-	CCSprite	*_backgroundSprite;	
+	CCSprite	*_backgroundGradientSprite;
+	CCSprite	*_backgroundSprite;
+	Terrain		*_terrain;
 }
 
 + (CCScene *) scene;

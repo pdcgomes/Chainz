@@ -163,6 +163,7 @@
 		0DA9CE26149BB2FC004AC6EA /* ZAttributedString.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA9CE1F149BB2FC004AC6EA /* ZAttributedString.m */; };
 		0DA9CE27149BB2FC004AC6EA /* ZFont.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA9CE22149BB2FC004AC6EA /* ZFont.m */; };
 		0DA9CE2B149BB3E7004AC6EA /* noise.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DA9CE2A149BB3E7004AC6EA /* noise.png */; };
+		0DF5DE0E14A3448500E2096E /* Terrain.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DF5DE0D14A3448500E2096E /* Terrain.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -452,6 +453,8 @@
 		0DA9CE21149BB2FC004AC6EA /* ZFont.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZFont.h; sourceTree = "<group>"; };
 		0DA9CE22149BB2FC004AC6EA /* ZFont.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ZFont.m; sourceTree = "<group>"; };
 		0DA9CE2A149BB3E7004AC6EA /* noise.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = noise.png; sourceTree = "<group>"; };
+		0DF5DE0C14A3448500E2096E /* Terrain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Terrain.h; sourceTree = "<group>"; };
+		0DF5DE0D14A3448500E2096E /* Terrain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Terrain.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -692,6 +695,8 @@
 		0DA9CCE114975FED004AC6EA /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				0DF5DE0C14A3448500E2096E /* Terrain.h */,
+				0DF5DE0D14A3448500E2096E /* Terrain.m */,
 				0DA9CCE31497603D004AC6EA /* Gem.h */,
 				0DA9CCE41497603D004AC6EA /* Gem.m */,
 				0DA9CCE6149763B3004AC6EA /* GameBoard.h */,
@@ -1161,6 +1166,7 @@
 				0DA9CE25149BB2FC004AC6EA /* FontManager.m in Sources */,
 				0DA9CE26149BB2FC004AC6EA /* ZAttributedString.m in Sources */,
 				0DA9CE27149BB2FC004AC6EA /* ZFont.m in Sources */,
+				0DF5DE0E14A3448500E2096E /* Terrain.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1219,7 +1225,7 @@
 				INFOPLIST_FILE = Chainz/Resources/Info.plist;
 				OTHER_LDFLAGS = "-lz";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "E92E901C-5AA5-4D9A-8310-A23A3F26716C";
+				PROVISIONING_PROFILE = "785AC724-6D9B-4AB1-A88B-98AF9D7A6B00";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -1237,7 +1243,7 @@
 				INFOPLIST_FILE = Chainz/Resources/Info.plist;
 				OTHER_LDFLAGS = "-lz";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "E92E901C-5AA5-4D9A-8310-A23A3F26716C";
+				PROVISIONING_PROFILE = "785AC724-6D9B-4AB1-A88B-98AF9D7A6B00";
 				VALIDATE_PRODUCT = YES;
 				WRAPPER_EXTENSION = app;
 			};
