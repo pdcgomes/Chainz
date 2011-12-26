@@ -221,8 +221,6 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	// else, compute the actual chains, clear them, etc.
 	
 	CC_SWAP(_board[(NSInteger)point1.x][(NSInteger)point1.y], _board[(NSInteger)point2.x][(NSInteger)point2.y]);
-	// schedule the swap animation here
-	//	[_gems exchangeObjectAtIndex:GemIndexForBoardPosition(node1) withObjectAtIndex:GemIndexForBoardPosition(node2)];
 	
 	NSInteger indexGem1 = GemIndexForBoardPosition(point1);
 	NSInteger indexGem2 = GemIndexForBoardPosition(point2);
@@ -231,12 +229,6 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	Gem *gem2 = [_gems objectAtIndex:indexGem2];
 	[_gems exchangeObjectAtIndex:indexGem1 withObjectAtIndex:indexGem2];
     CC_SWAP(gem1.point, gem2.point);
-	
-	//	NSArray *node1Sequences = [self _floodFill:node1 color:_board[(NSInteger)node1.x][(NSInteger)node1.y]];
-	//	NSArray *node2Sequences = [self _floodFill:node2 color:_board[(NSInteger)node2.x][(NSInteger)node2.y]];	
-	//	
-	//	NSArray *node1Chain = [self _findAllChainsForSequence:node1Sequences];
-	//	NSArray *node2Chain = [self _findAllChainsForSequence:node2Sequences];
 	
 	NSArray *point1Chain = [self _findAllChainsFromPoint:point1];
 	NSArray *point2Chain = [self _findAllChainsFromPoint:point2];
