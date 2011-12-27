@@ -7,6 +7,7 @@
 //
 
 #import "GameBoard.h"
+#import "GameBoardSolver.h"
 #import "Gem.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -121,6 +122,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 - (void)dealloc
 {
+	[_solver release];
 	[_validMovesLookupTable release];
 	[_legalMovesLookupTable release];
 	[_gemDestructionQueue release];
@@ -134,6 +136,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 - (id)init
 {
 	if((self = [super init])) {
+		_solver					= [[GameBoardSolver alloc] init];
 		_gemDestructionQueue 	= [[NSMutableArray alloc] init];
 		_gemDropdownQueue 		= [[NSMutableArray alloc] init];
 		_gemGenerationQueue 	= [[NSMutableArray alloc] init];
@@ -295,7 +298,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		[gem2 runAction:swapGem2Action];
 		
 		// replace this with the appropriate CCScheduler invocations
-		double delayInSeconds = 0.41;
+		double delayInSeconds = kClearChainAnimationDelay;
 		dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
 		dispatch_after(popTime, dispatch_get_main_queue(), ^(void) {
 			[self clearChain:point1 sequence:point1Chain];
@@ -406,10 +409,6 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		_board[(NSInteger)p.x][(NSInteger)p.y] = -1;
 
 		NSInteger gemIndex = GemIndexForBoardPosition(p);
-//		Gem *gem = [_gems objectAtIndex:gemIndex];
-//		[gem removeFromParentAndCleanup:YES];
-//		[_gems replaceObjectAtIndex:gemIndex withObject:[NSNull null]];
-
 		if([[_gems objectAtIndex:gemIndex] isKindOfClass:[Gem class]]) { // when clearing multiple intersecting chains, intersecting gems may have been cleared already
 		 // instead of simply removing the sprite, add it to a "destroy" list
 			[[_gems objectAtIndex:gemIndex] removeFromParentAndCleanup:YES]; // comment this (actual removal will be performed later on)
@@ -790,7 +789,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 - (void)_findAndClearAllComboChains
 {
-	double delayInSeconds = 0.41;
+	double delayInSeconds = kClearChainAnimationDelay;
 	dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
 	dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
 		CCLOG(@"Finding combo chains...");

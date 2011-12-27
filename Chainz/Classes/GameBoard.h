@@ -30,10 +30,12 @@ extern const CGSize		kGameboardCellSize;
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 @class Gem;
+@class GameBoardSolver;
 @interface GameBoard : CCLayer
 {
 	BOOL					_initialized;
 	NSInteger				_board[GAMEBOARD_NUM_COLS][GAMEBOARD_NUM_ROWS];
+	GameBoardSolver			*_solver;
 	NSMutableArray			*_gems;
 	NSMutableDictionary		*_validMovesLookupTable; // stores all legal swaps for a given point
 	NSMutableDictionary		*_legalMovesLookupTable; // stores the legality of every valid swap combination

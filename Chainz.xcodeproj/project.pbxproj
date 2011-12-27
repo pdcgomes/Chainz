@@ -164,6 +164,7 @@
 		0DA9CE27149BB2FC004AC6EA /* ZFont.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA9CE22149BB2FC004AC6EA /* ZFont.m */; };
 		0DA9CE2B149BB3E7004AC6EA /* noise.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DA9CE2A149BB3E7004AC6EA /* noise.png */; };
 		0DF5DE0E14A3448500E2096E /* Terrain.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DF5DE0D14A3448500E2096E /* Terrain.m */; };
+		0DF5DFD114A9E02B00E2096E /* GameBoardSolver.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DF5DFD014A9E02B00E2096E /* GameBoardSolver.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -455,6 +456,8 @@
 		0DA9CE2A149BB3E7004AC6EA /* noise.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = noise.png; sourceTree = "<group>"; };
 		0DF5DE0C14A3448500E2096E /* Terrain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Terrain.h; sourceTree = "<group>"; };
 		0DF5DE0D14A3448500E2096E /* Terrain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Terrain.m; sourceTree = "<group>"; };
+		0DF5DFCF14A9E02B00E2096E /* GameBoardSolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GameBoardSolver.h; path = Classes/GameBoardSolver.h; sourceTree = "<group>"; };
+		0DF5DFD014A9E02B00E2096E /* GameBoardSolver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GameBoardSolver.m; path = Classes/GameBoardSolver.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -512,10 +515,11 @@
 			isa = PBXGroup;
 			children = (
 				0DA9CCED14977863004AC6EA /* App */,
-				0DA9CCE114975FED004AC6EA /* Model */,
-				0DA9CCEF1497AA92004AC6EA /* Scenes */,
 				0DA5D2CE1493921F003D7678 /* libs */,
+				0DF5DFCE14A9DFE500E2096E /* Logic */,
+				0DA9CCE114975FED004AC6EA /* Model */,
 				0DA5D2811493921F003D7678 /* Resources */,
+				0DA9CCEF1497AA92004AC6EA /* Scenes */,
 				0DA5D2971493921F003D7678 /* Shaders */,
 				0DA5D40C14939225003D7678 /* Supporting Files */,
 			);
@@ -957,6 +961,15 @@
 			path = libs/FontLabel;
 			sourceTree = "<group>";
 		};
+		0DF5DFCE14A9DFE500E2096E /* Logic */ = {
+			isa = PBXGroup;
+			children = (
+				0DF5DFCF14A9E02B00E2096E /* GameBoardSolver.h */,
+				0DF5DFD014A9E02B00E2096E /* GameBoardSolver.m */,
+			);
+			name = Logic;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1167,6 +1180,7 @@
 				0DA9CE26149BB2FC004AC6EA /* ZAttributedString.m in Sources */,
 				0DA9CE27149BB2FC004AC6EA /* ZFont.m in Sources */,
 				0DF5DE0E14A3448500E2096E /* Terrain.m in Sources */,
+				0DF5DFD114A9E02B00E2096E /* GameBoardSolver.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
