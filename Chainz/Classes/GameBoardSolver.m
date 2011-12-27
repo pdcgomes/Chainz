@@ -13,6 +13,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 static const NSUInteger 	kGameboardMinSequence 	= 3;
 
+#define GET_COLOR(_point_) _board[(NSInteger)_point_.x][(NSInteger)_point_.y]
+#define GET_COLORXY(_x_, _y_) _board[(NSInteger)_x_][(NSInteger)_y_]
+#define SET_COLOR(_point_, _color_) _board[(NSInteger)_point_.x][(NSInteger)_point_.y] = _color_;} while(0)
+#define SET_COLORXY(_x_, _y_, _color_) do {_board[(NSInteger)_x_][(NSInteger)_y_] = _color_;} while(0)
+
 #define VALID_CELL(x,y) (x >= 0 && x < GAMEBOARD_NUM_COLS && y >= 0 && y < GAMEBOARD_NUM_ROWS)
 #define LEFT_CELL(x,y) (VALID_CELL(x-1, y) ? _board[x-1][y] : GemColorInvalid)
 #define RIGHT_CELL(x,y) (VALID_CELL(x+1, y) ? _board[x+1][y] : GemColorInvalid)
@@ -342,7 +347,6 @@ static const NSUInteger 	kGameboardMinSequence 	= 3;
 #pragma mark - 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Note: this needs optimizing, we're currently doing a lot of redundant checks
 ////////////////////////////////////////////////////////////////////////////////
 - (void)_updateLegalMoves
 {
@@ -421,6 +425,7 @@ static const NSUInteger 	kGameboardMinSequence 	= 3;
 	}
 	
 	CC_SWAP(_board[(NSInteger)p1.x][(NSInteger)p1.y], _board[(NSInteger)p2.x][(NSInteger)p2.y]);
+//	CC_SWAP(GET_COLOR(p1), GET_COLOR(p2));
 	
 	NSArray *p1Sequences = [self _floodFill:p1 color:_board[(NSInteger)p1.x][(NSInteger)p1.y]];
 	NSArray *p2Sequences = [self _floodFill:p2 color:_board[(NSInteger)p2.x][(NSInteger)p2.y]];	
@@ -429,6 +434,7 @@ static const NSUInteger 	kGameboardMinSequence 	= 3;
 	NSArray *p2Chain = [self _findAllChainsForSequence:p2Sequences];
 	
 	CC_SWAP(_board[(NSInteger)p2.x][(NSInteger)p2.y], _board[(NSInteger)p1.x][(NSInteger)p1.y]);
+//	CC_SWAP(GET_COLOR(p2), GET_COLOR(p1));
 	
 	BOOL isLegalMove = ([p1Chain count] + [p2Chain count] > 0);
 	[self _markMove:p1 to:p2 legal:isLegalMove];	

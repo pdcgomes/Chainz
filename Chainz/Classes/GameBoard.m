@@ -27,7 +27,7 @@ const CGFloat       kClearChainAnimationDelay           = 0.41;
 
 #define GET_COLOR(_point_) _board[(NSInteger)_point_.x][(NSInteger)_point_.y]
 #define GET_COLORXY(_x_, _y_) _board[(NSInteger)_x_][(NSInteger)_y_]
-#define SET_COLOR(_point_, _color_) do {_board[(NSInteger)_point_.x][(NSInteger)_point_.y] = _color_;} while(0)
+#define SET_COLOR(_point_, _color_) _board[(NSInteger)_point_.x][(NSInteger)_point_.y] = _color_;} while(0)
 #define SET_COLORXY(_x_, _y_, _color_) do {_board[(NSInteger)_x_][(NSInteger)_y_] = _color_;} while(0)
 
 #define RAND_COLOR() (arc4random()%GemColorCount)
