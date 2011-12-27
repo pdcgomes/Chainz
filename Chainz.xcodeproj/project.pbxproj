@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0D91045D14AA207B00D5A4BB /* GameBoardScoreTracker.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D91045C14AA207B00D5A4BB /* GameBoardScoreTracker.m */; };
 		0DA5D2711493921E003D7678 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DA5D2701493921E003D7678 /* QuartzCore.framework */; };
 		0DA5D2731493921E003D7678 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DA5D2721493921E003D7678 /* OpenGLES.framework */; };
 		0DA5D2751493921E003D7678 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DA5D2741493921E003D7678 /* OpenAL.framework */; };
@@ -168,6 +169,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0D91045B14AA207B00D5A4BB /* GameBoardScoreTracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GameBoardScoreTracker.h; path = Classes/GameBoardScoreTracker.h; sourceTree = "<group>"; };
+		0D91045C14AA207B00D5A4BB /* GameBoardScoreTracker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GameBoardScoreTracker.m; path = Classes/GameBoardScoreTracker.m; sourceTree = "<group>"; };
 		0DA5D26C1493921E003D7678 /* Chainz.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Chainz.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0DA5D2701493921E003D7678 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		0DA5D2721493921E003D7678 /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
@@ -966,6 +969,8 @@
 			children = (
 				0DF5DFCF14A9E02B00E2096E /* GameBoardSolver.h */,
 				0DF5DFD014A9E02B00E2096E /* GameBoardSolver.m */,
+				0D91045B14AA207B00D5A4BB /* GameBoardScoreTracker.h */,
+				0D91045C14AA207B00D5A4BB /* GameBoardScoreTracker.m */,
 			);
 			name = Logic;
 			sourceTree = "<group>";
@@ -1181,6 +1186,7 @@
 				0DA9CE27149BB2FC004AC6EA /* ZFont.m in Sources */,
 				0DF5DE0E14A3448500E2096E /* Terrain.m in Sources */,
 				0DF5DFD114A9E02B00E2096E /* GameBoardSolver.m in Sources */,
+				0D91045D14AA207B00D5A4BB /* GameBoardScoreTracker.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
