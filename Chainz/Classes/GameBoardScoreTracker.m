@@ -11,9 +11,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Constants and Definitions
 ////////////////////////////////////////////////////////////////////////////////
-const NSUInteger kMinChainSize		= 3;
-const NSUInteger kMinChainScore 	= 100;
-const NSUInteger kScorePerExtraGem	= 50;
+const NSUInteger kMinChainSize				= 3;	// minimum chain size to increase the score
+const NSUInteger kMinChainScore 			= 100;	// score for the minChainSize with no multipliers
+const NSUInteger kScorePerExtraGem			= 50;	// add this much for every chain size unit above the minimum
+
+const NSUInteger kMinNumberOfStreaksToScoreCombo	= 3;	// if the player accumulates this much streaks, we enter a combo mode
+const NSTimeInterval kMaxIntervalToCountAsStreak	= 0.2; //  this is the maximum time that can occur between scoring events in order for the event to count as streak
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helper functions
@@ -24,6 +27,8 @@ static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 	if(chainSize < kMinChainSize) {
 		return 0;
 	}
+	
+	// (MinimumScore + (ExtraScoreForEveryUnitAboveMinimum)) * CurrentMultiplier
 	return (kMinChainScore + ((chainSize - kMinChainSize) * kScorePerExtraGem)) * multiplier;
 }
 
@@ -75,7 +80,7 @@ static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 - (void)scoreChain:(NSArray *)chain
 {
 	NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-	if(now - _lastScoredAt < 0.2) {
+	if(now - _lastScoredAt < kMaxIntervalToCountAsStreak) {
 		_numberOfStreaks++;
 	}
 	else {
@@ -83,7 +88,7 @@ static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 		_scoreMultiplier = 1;
 	}
 	
-	if(_numberOfStreaks >= 3) {
+	if(_numberOfStreaks >= kMinNumberOfStreaksToScoreCombo) {
 		_scoreMultiplier++;
 		// notify delegate of streak
 	}
