@@ -15,13 +15,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 @interface GameBoardSolver : NSObject
 {
-	NSUInteger				_board[GAMEBOARD_NUM_COLS][GAMEBOARD_NUM_ROWS];
+	__weak GameBoard		*_gameboard;
+	NSInteger				_board[GAMEBOARD_NUM_COLS][GAMEBOARD_NUM_ROWS];
 	NSMutableDictionary		*_validMovesLookupTable; // stores all legal swaps for a given point
 	NSMutableDictionary		*_legalMovesLookupTable; // stores the legality of every valid swap combination
 }
 
 // Ensure the board state is updated
-- (void)updateBoard:(NSUInteger[GAMEBOARD_NUM_COLS][GAMEBOARD_NUM_ROWS])state;
+- (id)initWithGameBoard:(GameBoard *)board;
 
 - (BOOL)isLegalMove:(CGPoint)p1 p2:(CGPoint)p2;
 

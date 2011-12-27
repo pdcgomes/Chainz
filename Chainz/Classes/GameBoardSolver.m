@@ -25,6 +25,8 @@ static const NSUInteger 	kGameboardMinSequence 	= 3;
 ////////////////////////////////////////////////////////////////////////////////
 @interface GameBoardSolver()
 
+- (void)_updateBoardState;
+
 - (NSArray *)_floodFill:(CGPoint)node color:(NSInteger)color;
 - (NSArray *)_findAllChainsForSequence:(NSArray *)sequence;
 - (NSDictionary *)_findAllSequences;;
@@ -33,6 +35,8 @@ static const NSUInteger 	kGameboardMinSequence 	= 3;
 - (BOOL)_isLegalMove:(CGPoint)p1 p2:(CGPoint)p2;
 - (void)_markMove:(CGPoint)point1 to:(CGPoint)point2 legal:(BOOL)legal;
 - (BOOL)_lookupMove:(CGPoint)point1 toPoint:(CGPoint)point2;
+
+//- (void)_printBoard;
 
 @end
 
@@ -53,9 +57,10 @@ static const NSUInteger 	kGameboardMinSequence 	= 3;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-- (id)init
+- (id)initWithGameBoard:(GameBoard *)board
 {
 	if((self = [super init])) {
+		_gameboard = board;
 		_validMovesLookupTable = [[NSMutableDictionary alloc] init];
 		_legalMovesLookupTable = [[NSMutableDictionary alloc] init];
 	}
@@ -66,9 +71,9 @@ static const NSUInteger 	kGameboardMinSequence 	= 3;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-- (void)updateBoard:(NSUInteger[GAMEBOARD_NUM_COLS][GAMEBOARD_NUM_ROWS])state
+- (void)updateBoard:(NSInteger[GAMEBOARD_NUM_COLS][GAMEBOARD_NUM_ROWS])state
 {
-	memcpy(_board, state, sizeof(NSUInteger)*GAMEBOARD_NUM_COLS*GAMEBOARD_NUM_ROWS);
+	memcpy(_board, state, sizeof(NSInteger)*GAMEBOARD_NUM_COLS*GAMEBOARD_NUM_ROWS);
 	[self _updateLegalMoves];
 }
 
@@ -124,6 +129,13 @@ static const NSUInteger 	kGameboardMinSequence 	= 3;
 }
 
 #pragma mark - Private Methods
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)_updateBoardState
+{
+	memcpy(_board, [_gameboard board], sizeof(NSInteger)*GAMEBOARD_NUM_COLS*GAMEBOARD_NUM_ROWS);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // At the moment, at least in my head, it makes sense to separate the flood fill

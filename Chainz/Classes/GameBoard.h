@@ -46,6 +46,8 @@ extern const CGSize		kGameboardCellSize;
 	NSMutableArray			*_gemGenerationQueue;
 }
 
+- (void *)board;
+
 - (void)resetGameBoard;
 - (void)swapGemAtPoint:(CGPoint)gem1 withGemAtPoint:(CGPoint)gem2;
 - (BOOL)moveGemAtPoint:(CGPoint)point withDirection:(GameboardMovementDirection)direction;
