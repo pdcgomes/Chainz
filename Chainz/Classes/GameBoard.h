@@ -35,7 +35,8 @@ extern const CGSize		kGameboardCellSize;
 	BOOL					_initialized;
 	NSInteger				_board[GAMEBOARD_NUM_COLS][GAMEBOARD_NUM_ROWS];
 	NSMutableArray			*_gems;
-	NSMutableDictionary		*_validMovesLookupTable;
+	NSMutableDictionary		*_validMovesLookupTable; // stores all legal swaps for a given point
+	NSMutableDictionary		*_legalMovesLookupTable; // stores the legality of every valid swap combination
 	
 	// test code
 	NSMutableArray			*_gemDestructionQueue;

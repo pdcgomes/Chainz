@@ -33,6 +33,22 @@ const CGFloat       kClearChainAnimationDelay           = 0.41;
 
 #define GEM_ACTION(_gem_, _action_) ([NSArray arrayWithObjects:_gem_, _action_, nil])
 
+#define ITERATE_GAMEBOARD(x, y) \
+for(x = 0; x < GAMEBOARD_NUM_COLS; x++)\
+for(y = 0; y < GAMEBOARD_NUM_ROWS; y++)
+
+#define ITERATE_GAMEBOARD_REVERSE(x, y) \
+for(x = GAMEBOARD_NUM_COLS-1; x >= 0; x--)\
+for(y = GAMEBOARD_NUM_ROWS; y >= 0; y--)
+
+#define VALID_CELL(x,y) (x >= 0 && x < GAMEBOARD_NUM_COLS && y >= 0 && y < GAMEBOARD_NUM_ROWS)
+#define LEFT_CELL(x,y) (VALID_CELL(x-1, y) ? _board[x-1][y] : GemColorInvalid)
+#define RIGHT_CELL(x,y) (VALID_CELL(x+1, y) ? _board[x+1][y] : GemColorInvalid)
+#define ABOVE_CELL(x,y) (VALID_CELL(x,y-1) ? _board[x][y-1] : GemColorInvalid)
+#define BELOW_CELL(x,y) (VALID_CELL(x,y+1) ? _board[x][y+1] : GemColorInvalid)
+
+#define ASSERT_VALID_CELL(point) do { NSAssert1(VALID_CELL(point.x, point.y), @"Invalid cell %@", NSStringFromCGPoint(node)); } while(0)
+
 ////////////////////////////////////////////////////////////////////////////////
 // Helper functions
 /////////////////////////////////////////////// /////////////////////////////////
@@ -73,8 +89,8 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 @interface GameBoard()
 
-- (void)_updateAllValidMoves;
-- (BOOL)_isValidMove:(CGPoint)p1 p2:(CGPoint)p2;
+- (void)_updateLegalMoves;
+- (BOOL)_isLegalMove:(CGPoint)p1 p2:(CGPoint)p2;
 - (NSMutableDictionary *)_findAllValidMoves;
 
 - (NSArray *)_floodFill:(CGPoint)node color:(NSInteger)color;
@@ -91,7 +107,6 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 - (NSDictionary *)_findAllSequences;
 
 - (void)_drawGameboardGrid;
-
 - (void)_animateAllPendingChanges;
 
 @end
@@ -107,6 +122,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 - (void)dealloc
 {
 	[_validMovesLookupTable release];
+	[_legalMovesLookupTable release];
 	[_gemDestructionQueue release];
 	[_gemDropdownQueue release];
 	[_gemGenerationQueue release];
@@ -121,6 +137,8 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		_gemDestructionQueue 	= [[NSMutableArray alloc] init];
 		_gemDropdownQueue 		= [[NSMutableArray alloc] init];
 		_gemGenerationQueue 	= [[NSMutableArray alloc] init];
+		_validMovesLookupTable	= [[NSMutableDictionary alloc] init];
+		_legalMovesLookupTable 	= [[NSMutableDictionary alloc] init];
 	}
 	return self;
 }
@@ -178,6 +196,10 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 			}
 		}
 		
+//		ITERATE_GAMEBOARD(x, y) {
+//			_board[x][y] = RAND_COLOR();
+//		}
+		
 		NSMutableDictionary *chains = [self _findAllChains];
 		while([chains count] > 0) {
 			for(NSString *pointStr in [chains allKeys]) {
@@ -215,6 +237,14 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 			[gem release];
 		}
 	}
+	
+//	ITERATE_GAMEBOARD(x, y) {
+//		Gem *gem = [[Gem alloc] initWithGameboard:self position:(CGPoint){x,y} kind:GemKindNormal color:_board[x][y]];
+//		gem.position = CoordinatesForGemAtPosition((CGPoint){x,y});
+//		[self addChild:gem];
+//		[_gems addObject:gem];
+//		[gem release];
+//	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -353,6 +383,13 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 			}
 		}
 	}
+	
+//	ITERATE_GAMEBOARD_REVERSE(x, y) {
+//		if(_board[x][y] == -1) {
+//			_board[x][y] = RAND_COLOR();
+//			[generatedGems addObject:NSStringFromCGPoint((CGPoint){x,y})];
+//		}
+//	}
 	return [generatedGems autorelease];
 }
 
@@ -399,6 +436,12 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 			}
 		}
 	}
+	
+//	ITERATE_GAMEBOARD(x, y) {
+//		if(_board[x][y] == -1) {
+//			_board[x][y] = RAND_COLOR();
+//		}
+//	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -506,6 +549,8 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 - (NSArray *)_floodFill:(CGPoint)node color:(NSInteger)color
 {
+	ASSERT_VALID_CELL(node);
+	
 	NSMutableArray *matches = [[NSMutableArray alloc] init];
 	NSMutableArray *queue = [[NSMutableArray alloc] init];
 	[queue addObject:NSStringFromCGPoint(node)];
@@ -733,7 +778,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 - (NSDictionary *)_findAllValidMoves
 {
-	[self _updateAllValidMoves];
+	[self _updateLegalMoves];
 	return _validMovesLookupTable;
 }
 
@@ -743,24 +788,6 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 // after swapping gems and clearing the produced chains and dropping dangling gems
 // we also need to check whether new chains were formed as a result and clear them too0
 ////////////////////////////////////////////////////////////////////////////////
-//- (void)_findAndClearAllComboChains
-//{
-//	
-//	BOOL done = NO;
-//	while(!done) {
-//		NSDictionary *comboChains = [self _findAllChains];
-//		if([comboChains count] == 0) {
-//			done = YES;
-//			break;
-//		}
-//		for(NSString *pointStr in [comboChains allKeys]) {
-//			[self clearChain:CGPointFromString(pointStr) sequence:[comboChains objectForKey:pointStr]];
-//		}
-//		[self _dropDanglingGems];
-//		[self _generateAndDropDownGemsForClearedChains];
-//	}
-//}
-
 - (void)_findAndClearAllComboChains
 {
 	double delayInSeconds = 0.41;
@@ -786,29 +813,28 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Note: this needs optimizing, we're currently doing a lot of redundant checks
 ////////////////////////////////////////////////////////////////////////////////
-- (void)_updateAllValidMoves
+- (void)_updateLegalMoves
 {
-	if(!_validMovesLookupTable) {
-		_validMovesLookupTable = [[NSMutableDictionary alloc] init];
-	}
 	[_validMovesLookupTable removeAllObjects];
+	[_legalMovesLookupTable removeAllObjects];
 	
 	NSUInteger x, y;
 	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
 		for(y = 0; y < GAMEBOARD_NUM_ROWS; y++) {
 			NSMutableArray *movesForPoint = [[NSMutableArray alloc] initWithCapacity:4];
 			CGPoint p = (CGPoint){x, y};
-			if([self _isValidMove:p p2:(CGPoint){x+1, y}]) {
+			if([self _isLegalMove:p p2:(CGPoint){x+1, y}]) { // swap with right gem
 				[movesForPoint addObject:NSStringFromCGPoint((CGPoint){x+1, y})];
 			}
-			if([self _isValidMove:p p2:(CGPoint){x-1, y}]) {
+			if([self _isLegalMove:p p2:(CGPoint){x-1, y}]) { // swap with left gem
 				[movesForPoint addObject:NSStringFromCGPoint((CGPoint){x-1, y})];
 			}
-			if([self _isValidMove:p p2:(CGPoint){x, y+1}]) {
+			if([self _isLegalMove:p p2:(CGPoint){x, y+1}]) { // swap with gem below
 				[movesForPoint addObject:NSStringFromCGPoint((CGPoint){x, y+1})];
 			}
-			if([self _isValidMove:p p2:(CGPoint){x, y-1}]) {
+			if([self _isLegalMove:p p2:(CGPoint){x, y-1}]) { // swap with gem above
 				[movesForPoint addObject:NSStringFromCGPoint((CGPoint){x, y-1})];
 			}
 			if([movesForPoint count] > 0) {
@@ -820,10 +846,45 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// 
+////////////////////////////////////////////////////////////////////////////////
+- (void)_markMove:(CGPoint)point1 to:(CGPoint)point2 legal:(BOOL)legal
+{
+	NSString *point1Str = NSStringFromCGPoint(point1);
+	NSString *point2Str = NSStringFromCGPoint(point2);
+	
+	void (^updateLookupTableBlock)(NSString *fromPoint, NSString *toPoint, BOOL legal);
+	updateLookupTableBlock = ^(NSString *fromPointStr, NSString *toPointStr, BOOL legal) {
+		NSString *key = [NSString stringWithFormat:@"%@-%@", fromPointStr, toPointStr];
+		[_legalMovesLookupTable setObject:[NSNumber numberWithBool:legal] forKey:key];
+	};
+	
+	updateLookupTableBlock(point1Str, point2Str, legal);
+	updateLookupTableBlock(point2Str, point1Str, legal);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Checks whether a given move was already computed (marked)
+////////////////////////////////////////////////////////////////////////////////
+- (BOOL)_lookupMove:(CGPoint)point1 toPoint:(CGPoint)point2
+{
+	NSString *point1Str = NSStringFromCGPoint(point1);
+	NSString *point2Str = NSStringFromCGPoint(point2);
+	
+	NSString *key = [NSString stringWithFormat:@"%@-%@", point1Str, point2Str];
+	return [_legalMovesLookupTable objectForKey:key] != nil;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Checks whether performing a p1 <-> p2 swap would result in a valid move
 ////////////////////////////////////////////////////////////////////////////////
-- (BOOL)_isValidMove:(CGPoint)p1 p2:(CGPoint)p2
+- (BOOL)_isLegalMove:(CGPoint)p1 p2:(CGPoint)p2
 {
+	if([self _lookupMove:p1 toPoint:p2]) {
+		NSString *lookupKey = [NSString stringWithFormat:@"%@-%@", NSStringFromCGPoint(p1), NSStringFromCGPoint(p2)];
+		return [[_legalMovesLookupTable objectForKey:lookupKey] boolValue];
+	}
+	
 	CGRect bounds = CGRectMake(0, 0, GAMEBOARD_NUM_COLS, GAMEBOARD_NUM_ROWS);
 	BOOL gameboardContainsPoints = CGRectContainsPoint(bounds, p1) && CGRectContainsPoint(bounds, p2);
 	if(!gameboardContainsPoints) {
@@ -840,7 +901,11 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	
 	CC_SWAP(_board[(NSInteger)p2.x][(NSInteger)p2.y], _board[(NSInteger)p1.x][(NSInteger)p1.y]);
 	
-	return ([p1Chain count] + [p2Chain count] > 0);
+	BOOL isLegalMove = ([p1Chain count] + [p2Chain count] > 0);
+	[self _markMove:p1 to:p2 legal:isLegalMove];	
+	return isLegalMove;
+	
+//	return ([p1Chain count] + [p2Chain count] > 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -882,87 +947,5 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	CCMoveTo *dropAction = [CCMoveTo actionWithDuration:0.3 position:CoordinatesForGemAtPosition(dropDestination)];
 	[_gemDropdownQueue addObject:[NSArray arrayWithObjects:gem, dropAction, nil]];
 }
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-//- (BOOL)ccTouchBegan:(UITouch *)touch withEvent:(UIEvent *)event
-//{
-//	CGPoint p = CoordinatesForWindowLocation([touch locationInView:touch.window]);
-//	if(CGPointEqualToPoint(p, CGPointMake(NSNotFound, NSNotFound))) {
-//		return NO;
-//	}
-//
-//	CGPoint touchLocation = [touch locationInView:touch.window];
-//	CGPoint touchLocationFlipped = {touchLocation.x, [[CCDirector sharedDirector] winSize].height - touchLocation.y};
-//	
-//
-//	return YES;
-//	
-//	CGRect spriteRect = (CGRect){self.position, rect_.size};
-//	
-//	if(CGRectContainsPoint(spriteRect, touchPointFlipped)) {
-//		CCLOG(@"Touched gem %@", NSStringFromCGPoint(self.point));
-//		_firstTouchLocation = touchPointFlipped;
-//		return YES;
-//	}
-//	return NO;
-//	
-//	CCLOG(@"Gameboard touch location = %@, sprite_frame = %@", NSStringFromCGPoint(touchPoint), NSStringFromCGRect((CGRect){self.position, rect_.size}));
-//	//	CCLOG(@"Gameboard gem index = %@", NSStringFromCGPoint(CoordinatesForWindowLocation(p)));
-//	return YES;
-//}
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-//- (void)ccTouchMoved:(UITouch *)touch withEvent:(UIEvent *)event
-//{
-//	_moved = YES;
-//}
-
-//////////////////////////////////////////////////////////////////////////////////
-// Note: consider moving the gem touch handling logic to the gameboard itself
-// besided the potential improvement in performance (individual gems don't have to handle touches)
-// it's probably a much more flexible design
-//////////////////////////////////////////////////////////////////////////////////
-//- (void)ccTouchEnded:(UITouch *)touch withEvent:(UIEvent *)event
-//{
-//	if(!_moved) {
-//		[self markSelected:YES];
-//	}
-//	else {
-//		CGPoint endTouchLocation = [touch locationInView:touch.window];
-//		CGPoint endTouchLocationFlipped = {endTouchLocation.x, [[CCDirector sharedDirector] winSize].height - endTouchLocation.y};
-//		
-//		// vertical or horizontal?
-//		CGFloat horizontalOffset = endTouchLocationFlipped.x - _firstTouchLocation.x;
-//		CGFloat verticalOffset = endTouchLocationFlipped.y - _firstTouchLocation.y;
-//		
-//		if(fabs(horizontalOffset) >= fabs(verticalOffset)) { // moved horizontally
-//			if(horizontalOffset > 0) {
-//				[_gameboard moveGemAtPoint:self.point withDirection:GameboardMovementDirectionRight];
-//			}
-//			else if(horizontalOffset < 0) {
-//				[_gameboard moveGemAtPoint:self.point withDirection:GameboardMovementDirectionLeft];
-//			}
-//		}
-//		else {
-//			if(horizontalOffset > 0) {
-//				[_gameboard moveGemAtPoint:self.point withDirection:GameboardMovementDirectionUp];
-//			}
-//			else if(horizontalOffset < 0) {
-//				[_gameboard moveGemAtPoint:self.point withDirection:GameboardMovementDirectionDown];
-//			}
-//		}
-//	}
-//	
-//	_firstTouchLocation = CGPointZero;
-//}
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-//- (void)ccTouchCancelled:(UITouch *)touch withEvent:(UIEvent *)event
-//{
-//	_firstTouchLocation = CGPointZero;
-//}
 
 @end

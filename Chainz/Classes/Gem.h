@@ -28,6 +28,7 @@ typedef enum {
 	GemColorYellow,
 	GemColorCount,
 	GemColorClear = -1, // ensure it's always defined after GemColorCount
+	GemColorInvalid = -2
 } GemColor;
 
 typedef enum {
@@ -74,6 +75,8 @@ extern NSString *GemColorString(GemColor color);
 
 // Animations and Effects
 
+//- (void)moveTo:(CGPoint)position;
+//- (void)dropTo:(CGPoint)position;
 //- (void)wobble;
 //- (void)explode;
 //- (void)shrink;
