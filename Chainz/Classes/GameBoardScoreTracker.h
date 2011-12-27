@@ -22,6 +22,7 @@
 
 	id<GameBoardScoreTrackerDelegate>	_delegate;
 	struct {
+		unsigned delegateRespondsToDidStreak:1;
 		unsigned delegateRespondsToDidUpdateScore:1;
 		unsigned delegateRespondToDidScoreChain:1;
 		unsigned delegateRespondsToDidScoreCombochain:1;
@@ -43,6 +44,8 @@
 @protocol GameBoardScoreTrackerDelegate <NSObject>
 
 @required
+
+- (void)scoreTracker:(GameBoardScoreTracker *)tracker didStreak:(int)streaks;
 - (void)scoreTracker:(GameBoardScoreTracker *)tracker didUpdateScore:(double)score;
 - (void)scoreTracker:(GameBoardScoreTracker *)tracker didScoreChain:(double)score withMultiplier:(float)multiplier;
 - (void)scoreTracker:(GameBoardScoreTracker *)tracker didScoreComboChain:(double)score withMultiplier:(float)multiplier;

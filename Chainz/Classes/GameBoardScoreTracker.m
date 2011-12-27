@@ -34,6 +34,14 @@ static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+@interface GameBoardScoreTracker()
+
+- (void)_checkForStreak;
+
+@end
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 @implementation GameBoardScoreTracker
 
 @synthesize delegate = _delegate;
@@ -53,10 +61,15 @@ static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 - (id)initWithDelegate:(id<GameBoardScoreTrackerDelegate>)delegate
 {
 	if((self = [super init])) {
+		_flags.delegateRespondsToDidStreak			= [self.delegate respondsToSelector:@selector(scoreTracker:didStreak:)];
 		_flags.delegateRespondsToDidUpdateScore 	= [self.delegate respondsToSelector:@selector(scoreTracker:didUpdateScore:)];
 		_flags.delegateRespondToDidScoreChain 		= [self.delegate respondsToSelector:@selector(scoreTracker:didScoreChain:withMultiplier:)];
 		_flags.delegateRespondsToDidScoreCombochain = [self.delegate respondsToSelector:@selector(scoreTracker:didScoreComboChain:withMultiplier:)];
 		self.delegate = delegate;
+		
+		_numberOfStreaks = 0;
+		_scoreMultiplier = 1;
+		_lastScoredAt = [[NSDate date] timeIntervalSinceDate:[NSDate distantPast]];
 	}
 	return self;
 }
@@ -79,19 +92,7 @@ static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 ////////////////////////////////////////////////////////////////////////////////
 - (void)scoreChain:(NSArray *)chain
 {
-	NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-	if(now - _lastScoredAt < kMaxIntervalToCountAsStreak) {
-		_numberOfStreaks++;
-	}
-	else {
-		_numberOfStreaks = 0;
-		_scoreMultiplier = 1;
-	}
-	
-	if(_numberOfStreaks >= kMinNumberOfStreaksToScoreCombo) {
-		_scoreMultiplier++;
-		// notify delegate of streak
-	}
+	[self _checkForStreak];
 	
 	double chainScore = ComputeChainScore(chain, _scoreMultiplier);
 	_score += chainScore;
@@ -122,5 +123,26 @@ static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 }
 
 #pragma mark - Private Methods
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)_checkForStreak
+{
+	NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+	if(now - _lastScoredAt < kMaxIntervalToCountAsStreak) {
+		_numberOfStreaks++;
+	}
+	else {
+		_numberOfStreaks = 0;
+		_scoreMultiplier = 1;
+	}
+	
+	if(_numberOfStreaks >= kMinNumberOfStreaksToScoreCombo) {
+		_scoreMultiplier++;
+		if(_flags.delegateRespondsToDidStreak) {
+			[self.delegate scoreTracker:self didStreak:_numberOfStreaks];
+		}
+	}
+}
 
 @end
