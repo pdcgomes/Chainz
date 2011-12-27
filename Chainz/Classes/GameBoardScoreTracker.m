@@ -20,7 +20,11 @@ const NSUInteger kScorePerExtraGem	= 50;
 ////////////////////////////////////////////////////////////////////////////////
 static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 {
-	return (kMinChainScore + (([chain count] - kMinChainSize) * kScorePerExtraGem)) * multiplier;
+	NSUInteger chainSize = [chain count];
+	if(chainSize < kMinChainSize) {
+		return 0;
+	}
+	return (kMinChainScore + ((chainSize - kMinChainSize) * kScorePerExtraGem)) * multiplier;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -65,16 +69,30 @@ static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 #pragma mark - Public Methods
 
 ////////////////////////////////////////////////////////////////////////////////
+// We can try to promote fast gameplay by also increasing the multiplier when
+// the player scores various single chains within a very short interval (berzerk/frantic mode!)
 ////////////////////////////////////////////////////////////////////////////////
 - (void)scoreChain:(NSArray *)chain
 {
-	_multiplier = 1;
+	NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+	if(now - _lastScoredAt < 0.2) {
+		_numberOfStreaks++;
+	}
+	else {
+		_numberOfStreaks = 0;
+		_scoreMultiplier = 1;
+	}
 	
-	double chainScore = ComputeChainScore(chain, 1);
+	if(_numberOfStreaks >= 3) {
+		_scoreMultiplier++;
+		// notify delegate of streak
+	}
+	
+	double chainScore = ComputeChainScore(chain, _scoreMultiplier);
 	_score += chainScore;
 	
 	if(_flags.delegateRespondToDidScoreChain) {
-		[self.delegate scoreTracker:self didScoreChain:chainScore withMultiplier:_multiplier];
+		[self.delegate scoreTracker:self didScoreChain:chainScore withMultiplier:_scoreMultiplier];
 	}
 	if(_flags.delegateRespondsToDidUpdateScore) {
 		[self.delegate scoreTracker:self didUpdateScore:_score];
@@ -85,13 +103,13 @@ static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 ////////////////////////////////////////////////////////////////////////////////
 - (void)scoreComboChain:(NSArray *)chain
 {
-	_multiplier++;
+	_scoreMultiplier++;
 	
-	double chainScore = ComputeChainScore(chain, _multiplier);
+	double chainScore = ComputeChainScore(chain, _scoreMultiplier);
 	_score += chainScore;
 	
 	if(_flags.delegateRespondsToDidScoreCombochain) {
-		[self.delegate scoreTracker:self didScoreComboChain:chainScore withMultiplier:_multiplier];
+		[self.delegate scoreTracker:self didScoreComboChain:chainScore withMultiplier:_scoreMultiplier];
 	}
 	if(_flags.delegateRespondsToDidUpdateScore) {
 		[self.delegate scoreTracker:self didUpdateScore:_score];

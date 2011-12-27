@@ -16,7 +16,9 @@
 {
 	__weak GameBoard					*_board;
 	double								_score;
-	float								_multiplier;
+	float								_scoreMultiplier;
+	NSUInteger							_numberOfStreaks;
+	NSTimeInterval						_lastScoredAt;
 
 	id<GameBoardScoreTrackerDelegate>	_delegate;
 	struct {
@@ -44,6 +46,7 @@
 - (void)scoreTracker:(GameBoardScoreTracker *)tracker didUpdateScore:(double)score;
 - (void)scoreTracker:(GameBoardScoreTracker *)tracker didScoreChain:(double)score withMultiplier:(float)multiplier;
 - (void)scoreTracker:(GameBoardScoreTracker *)tracker didScoreComboChain:(double)score withMultiplier:(float)multiplier;
+
 
 @end
 
