@@ -26,8 +26,8 @@
 
 - (BOOL)isLegalMove:(CGPoint)p1 p2:(CGPoint)p2;
 
-- (NSArray *)findAllChainsFromPoint:(CGPoint)point;
 - (NSMutableDictionary *)findAllChains;
+- (NSArray *)findAllChainsFromPoint:(CGPoint)point;
 - (NSDictionary *)findAllValidMoves;
 
 @end

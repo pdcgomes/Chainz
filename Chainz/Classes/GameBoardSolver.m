@@ -86,6 +86,8 @@ static const NSUInteger 	kGameboardMinSequence 	= 3;
 ////////////////////////////////////////////////////////////////////////////////
 - (NSArray *)findAllChainsFromPoint:(CGPoint)point
 {
+	[self _updateBoardState];
+	
 	NSArray *sequences = [self _floodFill:point color:_board[(NSInteger)point.x][(NSInteger)point.y]];
 	return [self _findAllChainsForSequence:sequences];
 }
@@ -96,6 +98,8 @@ static const NSUInteger 	kGameboardMinSequence 	= 3;
 ////////////////////////////////////////////////////////////////////////////////
 - (NSMutableDictionary *)findAllChains
 {
+	[self _updateBoardState];
+
 	NSUInteger x, y;
 	NSMutableDictionary *matchesByPos = [[NSMutableDictionary alloc] init];
 	for(x = 0; x < GAMEBOARD_NUM_COLS; x++) {
@@ -122,6 +126,7 @@ static const NSUInteger 	kGameboardMinSequence 	= 3;
 ////////////////////////////////////////////////////////////////////////////////
 - (NSDictionary *)findAllValidMoves
 {
+	[self _updateBoardState];
 	[self _updateLegalMoves];
 	return _validMovesLookupTable;
 }
@@ -136,6 +141,8 @@ static const NSUInteger 	kGameboardMinSequence 	= 3;
 #pragma mark - Private Methods
 
 ////////////////////////////////////////////////////////////////////////////////
+// Copies the current gameboard state
+// Note: needs testing
 ////////////////////////////////////////////////////////////////////////////////
 - (void)_updateBoardState
 {
