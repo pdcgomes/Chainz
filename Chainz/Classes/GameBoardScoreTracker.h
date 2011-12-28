@@ -15,8 +15,8 @@
 @interface GameBoardScoreTracker : NSObject
 {
 	__weak GameBoard					*_board;
-	double								_score;
-	float								_scoreMultiplier;
+	NSUInteger							_score;
+	NSUInteger							_scoreMultiplier;
 	NSUInteger							_numberOfStreaks;
 	NSTimeInterval						_lastScoredAt;
 
@@ -30,12 +30,13 @@
 }
 
 @property (nonatomic, assign) id<GameBoardScoreTrackerDelegate> delegate;
+@property (nonatomic, readonly) NSUInteger score;
 
 - (id)initWithDelegate:(id<GameBoardScoreTrackerDelegate>)delegate;
 - (id)initWithGameBoard:(GameBoard *)board;
 
-- (void)scoreChain:(NSArray *)chain;
-- (void)scoreComboChain:(NSArray *)chain;
+- (NSUInteger)scoreChain:(NSArray *)chain;
+- (NSUInteger)scoreComboChain:(NSArray *)chain;
 
 @end
 
@@ -45,10 +46,10 @@
 
 @required
 
-- (void)scoreTracker:(GameBoardScoreTracker *)tracker didStreak:(int)streaks;
-- (void)scoreTracker:(GameBoardScoreTracker *)tracker didUpdateScore:(double)score;
-- (void)scoreTracker:(GameBoardScoreTracker *)tracker didScoreChain:(double)score withMultiplier:(float)multiplier;
-- (void)scoreTracker:(GameBoardScoreTracker *)tracker didScoreComboChain:(double)score withMultiplier:(float)multiplier;
+- (void)scoreTracker:(GameBoardScoreTracker *)tracker didStreak:(NSUInteger)streaks;
+- (void)scoreTracker:(GameBoardScoreTracker *)tracker didUpdateScore:(NSUInteger)score;
+- (void)scoreTracker:(GameBoardScoreTracker *)tracker didScoreChain:(NSUInteger)score withMultiplier:(NSUInteger)multiplier;
+- (void)scoreTracker:(GameBoardScoreTracker *)tracker didScoreComboChain:(NSUInteger)score withMultiplier:(NSUInteger)multiplier;
 
 
 @end

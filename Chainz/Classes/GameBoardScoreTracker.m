@@ -44,7 +44,8 @@ static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 ////////////////////////////////////////////////////////////////////////////////
 @implementation GameBoardScoreTracker
 
-@synthesize delegate = _delegate;
+@synthesize delegate 	= _delegate;
+@synthesize score		= _score;
 
 #pragma mark - Dealloc and Initialization
 
@@ -90,7 +91,7 @@ static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 // We can try to promote fast gameplay by also increasing the multiplier when
 // the player scores various single chains within a very short interval (berzerk/frantic mode!)
 ////////////////////////////////////////////////////////////////////////////////
-- (void)scoreChain:(NSArray *)chain
+- (NSUInteger)scoreChain:(NSArray *)chain
 {
 	[self _checkForStreak];
 	
@@ -103,11 +104,12 @@ static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 	if(_flags.delegateRespondsToDidUpdateScore) {
 		[self.delegate scoreTracker:self didUpdateScore:_score];
 	}
+	return chainScore;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-- (void)scoreComboChain:(NSArray *)chain
+- (NSUInteger)scoreComboChain:(NSArray *)chain
 {
 	_scoreMultiplier++;
 	
@@ -120,6 +122,7 @@ static inline NSUInteger ComputeChainScore(NSArray *chain, float multiplier)
 	if(_flags.delegateRespondsToDidUpdateScore) {
 		[self.delegate scoreTracker:self didUpdateScore:_score];
 	}
+	return chainScore;
 }
 
 #pragma mark - Private Methods
