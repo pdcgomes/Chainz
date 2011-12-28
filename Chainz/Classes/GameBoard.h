@@ -7,6 +7,7 @@
 //
 
 #import "cocos2d.h"
+#import "GameBoardScoreTracker.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -36,6 +37,7 @@ extern const CGSize		kGameboardCellSize;
 	BOOL					_initialized;
 	NSInteger				_board[GAMEBOARD_NUM_COLS][GAMEBOARD_NUM_ROWS];
 	GameBoardSolver			*_solver;
+	GameBoardScoreTracker	*_scoreTracker;
 	NSMutableArray			*_gems;
 	NSMutableDictionary		*_validMovesLookupTable; // stores all legal swaps for a given point
 	NSMutableDictionary		*_legalMovesLookupTable; // stores the legality of every valid swap combination
@@ -44,15 +46,22 @@ extern const CGSize		kGameboardCellSize;
 	NSMutableArray			*_gemDestructionQueue;
 	NSMutableArray			*_gemDropdownQueue;
 	NSMutableArray			*_gemGenerationQueue;
+	
+	Gem						*_selectedGem;
 }
+
+@property (nonatomic, readonly) GameBoardScoreTracker *scoreTracker;
 
 - (void *)board;
 
 - (void)resetGameBoard;
 - (void)swapGemAtPoint:(CGPoint)gem1 withGemAtPoint:(CGPoint)gem2;
 - (BOOL)moveGemAtPoint:(CGPoint)point withDirection:(GameboardMovementDirection)direction;
+- (void)selectGem:(Gem *)gem;
 
 - (void)clearChain:(CGPoint)point sequence:(NSArray *)sequence;
+- (void)clearChain:(CGPoint)point sequence:(NSArray *)sequence combo:(BOOL)isCombo;
+
 - (void)generateGemsForClearedCells;
 
 - (void)simulateGameplay;

@@ -52,7 +52,7 @@ for(y = GAMEBOARD_NUM_ROWS; y >= 0; y--)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helper functions
-/////////////////////////////////////////////// /////////////////////////////////
+////////////////////////////////////////////// /////////////////////////////////
 static NSInteger GemIndexForBoardPosition(CGPoint p) 
 {
 	return p.x*GAMEBOARD_NUM_COLS + p.y;
@@ -88,7 +88,22 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-@interface GameBoard()
+static BOOL PointsAreAdjacent(CGPoint p1, CGPoint p2)
+{
+	if(p1.x == p2.x) {
+		return (p2.y == p1.y + 1 ||
+				p2.y == p1.y - 1);
+	}
+	else if(p1.y == p2.y) {
+		return (p2.x == p1.x + 1 ||
+				p2.x == p1.x - 1);
+	}
+	return NO;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+@interface GameBoard() <GameBoardScoreTrackerDelegate>
 
 - (void)_updateLegalMoves;
 - (BOOL)_isLegalMove:(CGPoint)p1 p2:(CGPoint)p2;
@@ -116,6 +131,8 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 @implementation GameBoard
 
+@synthesize scoreTracker = _scoreTracker;
+
 #pragma mark - Dealloc and Initialization
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -123,6 +140,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 - (void)dealloc
 {
 	[_solver release];
+	[_scoreTracker release];
 	[_validMovesLookupTable release];
 	[_legalMovesLookupTable release];
 	[_gemDestructionQueue release];
@@ -137,6 +155,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 {
 	if((self = [super init])) {
 		_solver					= [[GameBoardSolver alloc] init];
+		_scoreTracker			= [[GameBoardScoreTracker alloc] initWithDelegate:self];
 		_gemDestructionQueue 	= [[NSMutableArray alloc] init];
 		_gemDropdownQueue 		= [[NSMutableArray alloc] init];
 		_gemGenerationQueue 	= [[NSMutableArray alloc] init];
@@ -210,7 +229,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 //			_board[x][y] = RAND_COLOR();
 //		}
 		
-		NSMutableDictionary *chains = [self _findAllChains];
+		NSMutableDictionary *chains = [self _findAllChains]; // replace with solver call // [_solver findAllChains];
 		while([chains count] > 0) {
 			for(NSString *pointStr in [chains allKeys]) {
 				CGPoint p = CGPointFromString(pointStr);
@@ -220,7 +239,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 			[self generateGemsForClearedCells];
 			
 			[chains removeAllObjects];
-			[chains setDictionary:[self _findAllChains]];
+			[chains setDictionary:[self _findAllChains]]; // replace with solver call // [_solver findAllChains];
 		}
 		
 		if([[self _findAllValidMoves] count] > 0) {
@@ -279,16 +298,16 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	[_gems exchangeObjectAtIndex:indexGem1 withObjectAtIndex:indexGem2];
     CC_SWAP(gem1.point, gem2.point);
 	
-	NSArray *point1Chain = [self _findAllChainsFromPoint:point1];
-	NSArray *point2Chain = [self _findAllChainsFromPoint:point2];
+	NSArray *point1Chain = [self _findAllChainsFromPoint:point1]; // replace with solver call [_solver findAllChainsFromPoint];
+	NSArray *point2Chain = [self _findAllChainsFromPoint:point2]; // replace with solver call [_solver findAllChainsFromPoint];
 	
-	id swapGem1Action = [CCMoveTo actionWithDuration:0.4 position:gem2.position];
-	id swapGem2Action = [CCMoveTo actionWithDuration:0.4 position:gem1.position];
+	id swapGem1Action = [CCMoveTo actionWithDuration:kSwapAnimationDuration position:gem2.position];
+	id swapGem2Action = [CCMoveTo actionWithDuration:kSwapAnimationDuration position:gem1.position];
 	
 	BOOL canSwapGems = ([point1Chain count] + [point2Chain count] > 0);
 	if(!canSwapGems) {
-		id swapGem1ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem1.position];
-		id swapGem2ReverseAction = [CCMoveTo actionWithDuration:0.4 position:gem2.position];
+		id swapGem1ReverseAction = [CCMoveTo actionWithDuration:kSwapAnimationDuration position:gem1.position];
+		id swapGem2ReverseAction = [CCMoveTo actionWithDuration:kSwapAnimationDuration position:gem2.position];
 		
 		CC_SWAP(_board[(NSInteger)point1.x][(NSInteger)point1.y], _board[(NSInteger)point2.x][(NSInteger)point2.y]);
         CC_SWAP(gem1.point, gem2.point);
@@ -308,8 +327,8 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		double delayInSeconds = kClearChainAnimationDelay;
 		dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
 		dispatch_after(popTime, dispatch_get_main_queue(), ^(void) {
-			[self clearChain:point1 sequence:point1Chain];
-			[self clearChain:point2 sequence:point2Chain];
+			[self clearChain:point1 sequence:point1Chain combo:NO];
+			[self clearChain:point2 sequence:point2Chain combo:NO];
 			[self _dropDanglingGems];
 			[self _generateAndDropDownGemsForClearedChains];
 			[self _findAndClearAllComboChains];
@@ -352,6 +371,30 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)selectGem:(Gem *)gem
+{
+	if(!_selectedGem) {
+		_selectedGem = gem;
+		[gem markSelected:YES];
+		return;
+	}
+
+	[_selectedGem markSelected:NO];
+
+	// if we had a previously selected gem and the newly selected gem
+	// is adjacent, swap them
+	if(PointsAreAdjacent(gem.point, _selectedGem.point)) {
+		[self swapGemAtPoint:_selectedGem.point withGemAtPoint:gem.point];
+		_selectedGem = nil;
+	}
+	else {
+		_selectedGem = gem;
+		[_selectedGem markSelected:YES];
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Iterates the whole board and generates new gems for all cells marked as cleared (-1)
 // Schedules the drop down animation of all generated gems
 ////////////////////////////////////////////////////////////////////////////////
@@ -368,13 +411,15 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 		gem.position = srcSpritePosition;
 		
 		[self addChild:gem];
-		[gem runAction:[CCMoveTo actionWithDuration:0.4 position:dstSpritePosition]];
+		[gem runAction:[CCMoveTo actionWithDuration:kDropNewGemAnimationDuration position:dstSpritePosition]];
 		
 		[_gems replaceObjectAtIndex:GemIndexForBoardPosition(boardPos) withObject:gem];
 		[gem release];
 	}
 	[self printBoard];
 }
+
+// TODO: implement a variant of _generateGemsForClearedCells that ensures a solvable board
 
 ////////////////////////////////////////////////////////////////////////////////
 // Iterates the whole board and generates new gems for all cells marked as cleared (-1)
@@ -413,7 +458,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	//	NSInteger x, y;
 	for(NSString *pointStr in sequence) {
 		CGPoint p = CGPointFromString(pointStr);
-		_board[(NSInteger)p.x][(NSInteger)p.y] = -1;
+		_board[(NSInteger)p.x][(NSInteger)p.y] = -1; // as an optimization, we can keep a cache of all empty positions
 
 		NSInteger gemIndex = GemIndexForBoardPosition(p);
 		if([[_gems objectAtIndex:gemIndex] isKindOfClass:[Gem class]]) { // when clearing multiple intersecting chains, intersecting gems may have been cleared already
@@ -425,6 +470,25 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	}
 	[self visit];
 	// schedule the clear animation
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)clearChain:(CGPoint)point sequence:(NSArray *)sequence combo:(BOOL)isCombo
+{
+	[self clearChain:point sequence:sequence];
+	
+	NSUInteger chainScore = 0;
+	if(!isCombo) {
+		chainScore = [_scoreTracker scoreChain:sequence];
+	}
+	else {
+		chainScore = [_scoreTracker scoreComboChain:sequence];
+	}
+	
+	if(chainScore > 0) {
+		// trigger animation here
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -468,7 +532,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 			}
 			if(py >= 0) {
 				_board[x][y] = _board[x][py];
-				_board[x][py] = -1;
+				_board[x][py] = -1; // as an optimization, we can keep a cache of all empty positions
 				// schedule the drop down animation here
 				// or
 				// save the position update (src => destination) and return the list
@@ -482,7 +546,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 				id gem = [_gems objectAtIndex:newIndex];
 				if([gem isKindOfClass:[Gem class]]) {
 					[(Gem *)gem setPoint:newPos];
-					CCMoveTo *action = [CCMoveTo actionWithDuration:0.3 position:CoordinatesForGemAtPosition(newPos)];
+					CCMoveTo *action = [CCMoveTo actionWithDuration:kDropDanglingGemAnimationDuration position:CoordinatesForGemAtPosition(newPos)];
 					[(Gem *)gem runAction:action];
 				}
 			}
@@ -542,6 +606,9 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 
 #pragma mark - Private Methods
 
+#pragma mark - MOVE THE FOLLOWING TO GameBoardSolver
+#pragma mark -
+
 ////////////////////////////////////////////////////////////////////////////////
 // At the moment, at least in my head, it makes sense to separate the flood fill
 // from the actual code that determines if there are valid chains
@@ -553,6 +620,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 //	we perform the same operation for every matching point
 //	if we matched at least 3 points (including the source) we return them
 ////////////////////////////////////////////////////////////////////////////////
+// XXX: TO BE DELETED - moved to GameBoardSolver
 - (NSArray *)_floodFill:(CGPoint)node color:(NSInteger)color
 {
 	ASSERT_VALID_CELL(node);
@@ -632,6 +700,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 // TODO: modify to allow a reference point to be passed. The resulting chain must contain
 // the point
 ////////////////////////////////////////////////////////////////////////////////
+// XXX: TO BE DELETED - moved to GameBoardSolver
 - (NSArray *)_findAllChainsForSequence:(NSArray *)sequence
 {
 	//	NSLog(@"***** FINDING ALL VALID CHAINS *****");
@@ -720,6 +789,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+// XXX: TO BE DELETED - moved to GameBoardSolver
 - (NSArray *)_findAllChainsFromPoint:(CGPoint)point
 {
 	NSArray *sequences = [self _floodFill:point color:_board[(NSInteger)point.x][(NSInteger)point.y]];
@@ -728,6 +798,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+// XXX: TO BE DELETED - moved to GameBoardSolver
 - (NSDictionary *)_findAllSequences
 {
 	[self printBoard];
@@ -756,6 +827,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 // Inspects the whole board and returns a list of all current chains 
 // [source_point] => [list of points that comprise the chain]
 ////////////////////////////////////////////////////////////////////////////////
+// XXX: TO BE DELETED - moved to GameBoardSolver
 - (NSMutableDictionary *)_findAllChains
 {
 	NSUInteger x, y;
@@ -782,6 +854,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 // after all chains are processed, we would invoke this method agan to recompute
 // all valid moves - this would also make the job of handing tips to the user a lot easier
 ////////////////////////////////////////////////////////////////////////////////
+// XXX: TO BE DELETED - moved to GameBoardSolver
 - (NSDictionary *)_findAllValidMoves
 {
 	[self _updateLegalMoves];
@@ -789,38 +862,9 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// todo: add proper delays between relevant calls
-// we need animations to flow smoothly (clearing chains, dropping dangling gems, dropping replacement gems, etc.)
-// after swapping gems and clearing the produced chains and dropping dangling gems
-// we also need to check whether new chains were formed as a result and clear them too0
-////////////////////////////////////////////////////////////////////////////////
-- (void)_findAndClearAllComboChains
-{
-	double delayInSeconds = kClearChainAnimationDelay;
-	dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-	dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-		CCLOG(@"Finding combo chains...");
-		NSDictionary *comboChains = [self _findAllChains];
-		if([comboChains count] == 0) {
-			CCLOG(@"No combo chains found.");
-			return;
-		}
-		
-		CCLOG(@"Combo chains found: %@", comboChains);
-		
-		for(NSString *pointStr in [comboChains allKeys]) {
-			[self clearChain:CGPointFromString(pointStr) sequence:[comboChains objectForKey:pointStr]];
-		}
-		[self _dropDanglingGems];
-		[self _generateAndDropDownGemsForClearedChains];
-		
-		[self _findAndClearAllComboChains]; // recursively invoke the function
-	});
-}
-
-////////////////////////////////////////////////////////////////////////////////
 // Note: this needs optimizing, we're currently doing a lot of redundant checks
 ////////////////////////////////////////////////////////////////////////////////
+// XXX: TO BE DELETED - moved to GameBoardSolver
 - (void)_updateLegalMoves
 {
 	[_validMovesLookupTable removeAllObjects];
@@ -854,6 +898,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 // 
 ////////////////////////////////////////////////////////////////////////////////
+// XXX: TO BE DELETED - moved to GameBoardSolver
 - (void)_markMove:(CGPoint)point1 to:(CGPoint)point2 legal:(BOOL)legal
 {
 	NSString *point1Str = NSStringFromCGPoint(point1);
@@ -872,6 +917,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 // Checks whether a given move was already computed (marked)
 ////////////////////////////////////////////////////////////////////////////////
+// XXX: TO BE DELETED - moved to GameBoardSolver
 - (BOOL)_lookupMove:(CGPoint)point1 toPoint:(CGPoint)point2
 {
 	NSString *point1Str = NSStringFromCGPoint(point1);
@@ -884,6 +930,7 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 ////////////////////////////////////////////////////////////////////////////////
 // Checks whether performing a p1 <-> p2 swap would result in a valid move
 ////////////////////////////////////////////////////////////////////////////////
+// XXX: TO BE DELETED - moved to GameBoardSolver
 - (BOOL)_isLegalMove:(CGPoint)p1 p2:(CGPoint)p2
 {
 	if([self _lookupMove:p1 toPoint:p2]) {
@@ -912,6 +959,38 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 	return isLegalMove;
 	
 //	return ([p1Chain count] + [p2Chain count] > 0);
+}
+
+#pragma mark -
+
+////////////////////////////////////////////////////////////////////////////////
+// todo: add proper delays between relevant calls
+// we need animations to flow smoothly (clearing chains, dropping dangling gems, dropping replacement gems, etc.)
+// after swapping gems and clearing the produced chains and dropping dangling gems
+// we also need to check whether new chains were formed as a result and clear them too
+////////////////////////////////////////////////////////////////////////////////
+- (void)_findAndClearAllComboChains
+{
+	double delayInSeconds = kClearChainAnimationDelay;
+	dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+	dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+		CCLOG(@"Finding combo chains...");
+		NSDictionary *comboChains = [self _findAllChains]; // replace with solver call [_solver findAllChains];
+		if([comboChains count] == 0) {
+			CCLOG(@"No combo chains found.");
+			return;
+		}
+		
+		CCLOG(@"Combo chains found: %@", comboChains);
+		
+		for(NSString *pointStr in [comboChains allKeys]) {
+			[self clearChain:CGPointFromString(pointStr) sequence:[comboChains objectForKey:pointStr] combo:YES];
+		}
+		[self _dropDanglingGems];
+		[self _generateAndDropDownGemsForClearedChains];
+		
+		[self _findAndClearAllComboChains]; // recursively invoke the function
+	});
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -952,6 +1031,36 @@ static CGPoint CoordinatesForWindowLocation(CGPoint p)
 {
 	CCMoveTo *dropAction = [CCMoveTo actionWithDuration:0.3 position:CoordinatesForGemAtPosition(dropDestination)];
 	[_gemDropdownQueue addObject:[NSArray arrayWithObjects:gem, dropAction, nil]];
+}
+
+#pragma mark - GameBoardScoreTrackerDelegate
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)scoreTracker:(GameBoardScoreTracker *)tracker didStreak:(NSUInteger)streaks
+{
+	CCLOG(@"Streak => %d", streaks);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)scoreTracker:(GameBoardScoreTracker *)tracker didUpdateScore:(NSUInteger)score
+{
+	CCLOG(@"didUpdateScore => %d", score);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)scoreTracker:(GameBoardScoreTracker *)tracker didScoreChain:(NSUInteger)score withMultiplier:(NSUInteger)multiplier
+{
+	CCLOG(@"didScoreChain => %d * %d", score, multiplier);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+- (void)scoreTracker:(GameBoardScoreTracker *)tracker didScoreComboChain:(NSUInteger)score withMultiplier:(NSUInteger)multiplier
+{
+	CCLOG(@"didScoreComboChain => %d * %d", score, multiplier);
 }
 
 @end

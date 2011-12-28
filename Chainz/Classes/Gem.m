@@ -151,6 +151,7 @@ NSString *GemColorString(GemColor color)
 	if(CGRectContainsPoint(spriteRect, touchLocationFlipped)) {
 		CCLOG(@"Touched gem %@", NSStringFromCGPoint(self.point));
 		_firstTouchLocation = touchLocationFlipped;
+		_moved = NO;
 		return YES;
 	}
 	return NO;
@@ -175,9 +176,10 @@ NSString *GemColorString(GemColor color)
 - (void)ccTouchEnded:(UITouch *)touch withEvent:(UIEvent *)event
 {
 	if(!_moved) {
-		[self markSelected:YES];
+		[_gameboard selectGem:self];
 	}
 	else {
+		// TODO: add a minimum offset threshold to trigger the actual swipe, otherwise consider it a single tap
 		CGPoint endTouchLocation = [touch locationInView:touch.window];
 		CGPoint endTouchLocationFlipped = {endTouchLocation.x, [[CCDirector sharedDirector] winSize].height - endTouchLocation.y};
 		
@@ -199,8 +201,9 @@ NSString *GemColorString(GemColor color)
 //			CCLOGINFO(@"Invalid move %@ => %@", NSStringFromCGPoint(self.point), );
 		}
 	}
-	
+
 	_firstTouchLocation = CGPointZero;
+	_moved = NO;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -208,6 +211,7 @@ NSString *GemColorString(GemColor color)
 - (void)ccTouchCancelled:(UITouch *)touch withEvent:(UIEvent *)event
 {
 	_firstTouchLocation = CGPointZero;
+	_moved = NO;
 }
 
 #pragma mark - Public Methods
@@ -230,7 +234,6 @@ NSString *GemColorString(GemColor color)
 	else {
 		// clear selected mode
 	}
-	// notify gameboard
 }
 
 #pragma mark - Animations and Effects
